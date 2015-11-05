@@ -10,5 +10,8 @@ lex.sql.c: SqlParser.l
 SqlParser.tab.c: SqlParser.y
 	bison -d -psql $<
 
+test: $@
+	echo 0;
+
 clean:
 	rm -f bruinbase bruinbase.exe *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h 
