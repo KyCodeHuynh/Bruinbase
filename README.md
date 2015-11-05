@@ -1,5 +1,7 @@
 # Bruinbase
 
+![](https://travis-ci.org/KyCodeHuynh/Bruinbase.svg)
+
 ## Introduction 
 
 Bruinbase is a lightweight relational database with B+ tree index.
