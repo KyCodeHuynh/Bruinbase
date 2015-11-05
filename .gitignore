@@ -30,3 +30,10 @@ latex/*
 *.exe
 *.out
 *.app
+
+# Project outputs
+SqlParser.tab.c
+SqlParser.tab.h
+bruinbase
+bruinbase.dSYM/*
+lex.sql.c
