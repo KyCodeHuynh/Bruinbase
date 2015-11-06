@@ -5,7 +5,7 @@
 
 # Variables are referenced using names and dynamically typed
 printf "Test 1\n"
-test1=$(./bruinbase << EOF
+test1=$(./bruinbase << 'EOF'
 SELECT * FROM Movie WHERE key > 1000 AND key < 1010 
 QUIT)
 printf "$test1\n\n"
@@ -14,7 +14,7 @@ printf "$test1\n\n"
 # Backticks also do this, but cannot be nested.
 
 printf "Test 2\n"
-test2=$(./bruinbase << EOF 
+test2=$(./bruinbase << 'EOF' 
 SELECT COUNT(*) FROM Movie
 QUIT)
 printf "$test2\n\n"
