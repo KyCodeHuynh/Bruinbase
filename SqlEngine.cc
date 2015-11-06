@@ -130,13 +130,29 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   return rc;
 }
 
+// TODO: For part A, we assume index is always false and ignore it.
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
-  /* your code here */
+    // TODO: Implement! 
+
+    // Outline of plan of attack: 
+    //
+    // Use I/O libraries to open() loadfile and get a resource handle for it.
+    // Open RecordFile "table".tbl if it already exists, or create it if not.
+    // Get a line/tuple from loadfile using I/O libraries
+    // Parse that line/tuple using SqlEngine::parseLoadLine()   
+    // Insert the parsed tuple into the RecordFile
+
+    // Automatically creates file if it does not exist; open in read-only mode
+  RecordFile recFile = open(table + ".tbl", 'r');
+
+
 
   return 0;
 }
 
+// Takes a raw input line from the loadfile, 
+// and populates its outputs with the key/value pair.
 RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
 {
     const char *s;

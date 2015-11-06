@@ -37,3 +37,4 @@ SqlParser.tab.h
 bruinbase
 bruinbase.dSYM/*
 lex.sql.c
+*.swp

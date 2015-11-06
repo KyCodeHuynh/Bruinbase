@@ -10,6 +10,8 @@
 #ifndef BRUINBASE_H
 #define BRUINBASE_H
 
+// RC is a "Return Code", a simple int,
+// whose possible error cases are listed below:
 typedef int RC;
 
 const int RC_FILE_OPEN_FAILED    = -1001;
