@@ -143,8 +143,10 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     // Parse that line/tuple using SqlEngine::parseLoadLine()   
     // Insert the parsed tuple into the RecordFile
 
-    // Automatically creates file if it does not exist; open in read-only mode
-  RecordFile recFile = open(table + ".tbl", 'r');
+    // Automatically creates file if it does not exist; open in writing mode
+    RecordFile recFile;
+    // TODO: Handle error case, when retCode < 0
+    RC retCode = recFile.open(table + ".tbl", 'w');
 
 
 
