@@ -15,4 +15,4 @@ test: $@
 	bash queries.sh
 
 clean:
-	rm -f bruinbase bruinbase.exe *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h 
+	rm -f bruinbase bruinbase.exe *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl

@@ -24,110 +24,110 @@ int sqlparse(void);
 
 RC SqlEngine::run(FILE* commandline)
 {
-  fprintf(stdout, "Bruinbase> ");
+    fprintf(stdout, "Bruinbase> ");
 
-  // set the command line input and start parsing user input
-  sqlin = commandline;
-  sqlparse();  // sqlparse() is defined in SqlParser.tab.c generated from
-               // SqlParser.y by bison (bison is GNU equivalent of yacc)
+    // set the command line input and start parsing user input
+    sqlin = commandline;
+    sqlparse();  // sqlparse() is defined in SqlParser.tab.c generated from
+    // SqlParser.y by bison (bison is GNU equivalent of yacc)
 
-  return 0;
+    return 0;
 }
 
 RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 {
-  RecordFile rf;   // RecordFile containing the table
-  RecordId   rid;  // record cursor for table scanning
+    RecordFile rf;   // RecordFile containing the table
+    RecordId   rid;  // record cursor for table scanning
 
-  RC     rc;
-  int    key;     
-  string value;
-  int    count;
-  int    diff;
+    RC     rc;
+    int    key;     
+    string value;
+    int    count;
+    int    diff;
 
-  // open the table file
-  if ((rc = rf.open(table + ".tbl", 'r')) < 0) {
-    fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
+    // open the table file
+    if ((rc = rf.open(table + ".tbl", 'r')) < 0) {
+        fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
+        return rc;
+    }
+
+    // scan the table file from the beginning
+    rid.pid = rid.sid = 0;
+    count = 0;
+    while (rid < rf.endRid()) {
+        // read the tuple
+        if ((rc = rf.read(rid, key, value)) < 0) {
+            fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+            goto exit_select;
+        }
+
+        // check the conditions on the tuple
+        for (unsigned i = 0; i < cond.size(); i++) {
+            // compute the difference between the tuple value and the condition value
+            switch (cond[i].attr) {
+                case 1:
+                    diff = key - atoi(cond[i].value);
+                    break;
+                case 2:
+                    diff = strcmp(value.c_str(), cond[i].value);
+                    break;
+            }
+
+            // skip the tuple if any condition is not met
+            switch (cond[i].comp) {
+                case SelCond::EQ:
+                    if (diff != 0) goto next_tuple;
+                    break;
+                case SelCond::NE:
+                    if (diff == 0) goto next_tuple;
+                    break;
+                case SelCond::GT:
+                    if (diff <= 0) goto next_tuple;
+                    break;
+                case SelCond::LT:
+                    if (diff >= 0) goto next_tuple;
+                    break;
+                case SelCond::GE:
+                    if (diff < 0) goto next_tuple;
+                    break;
+                case SelCond::LE:
+                    if (diff > 0) goto next_tuple;
+                    break;
+            }
+        }
+
+        // the condition is met for the tuple. 
+        // increase matching tuple counter
+        count++;
+
+        // print the tuple 
+        switch (attr) {
+            case 1:  // SELECT key
+                fprintf(stdout, "%d\n", key);
+                break;
+            case 2:  // SELECT value
+                fprintf(stdout, "%s\n", value.c_str());
+                break;
+            case 3:  // SELECT *
+                fprintf(stdout, "%d '%s'\n", key, value.c_str());
+                break;
+        }
+
+        // move to the next tuple
+next_tuple:
+        ++rid;
+    }
+
+    // print matching tuple count if "select count(*)"
+    if (attr == 4) {
+        fprintf(stdout, "%d\n", count);
+    }
+    rc = 0;
+
+    // close the table file and return
+exit_select:
+    rf.close();
     return rc;
-  }
-
-  // scan the table file from the beginning
-  rid.pid = rid.sid = 0;
-  count = 0;
-  while (rid < rf.endRid()) {
-    // read the tuple
-    if ((rc = rf.read(rid, key, value)) < 0) {
-      fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
-      goto exit_select;
-    }
-
-    // check the conditions on the tuple
-    for (unsigned i = 0; i < cond.size(); i++) {
-      // compute the difference between the tuple value and the condition value
-      switch (cond[i].attr) {
-      case 1:
-	diff = key - atoi(cond[i].value);
-	break;
-      case 2:
-	diff = strcmp(value.c_str(), cond[i].value);
-	break;
-      }
-
-      // skip the tuple if any condition is not met
-      switch (cond[i].comp) {
-      case SelCond::EQ:
-	if (diff != 0) goto next_tuple;
-	break;
-      case SelCond::NE:
-	if (diff == 0) goto next_tuple;
-	break;
-      case SelCond::GT:
-	if (diff <= 0) goto next_tuple;
-	break;
-      case SelCond::LT:
-	if (diff >= 0) goto next_tuple;
-	break;
-      case SelCond::GE:
-	if (diff < 0) goto next_tuple;
-	break;
-      case SelCond::LE:
-	if (diff > 0) goto next_tuple;
-	break;
-      }
-    }
-
-    // the condition is met for the tuple. 
-    // increase matching tuple counter
-    count++;
-
-    // print the tuple 
-    switch (attr) {
-    case 1:  // SELECT key
-      fprintf(stdout, "%d\n", key);
-      break;
-    case 2:  // SELECT value
-      fprintf(stdout, "%s\n", value.c_str());
-      break;
-    case 3:  // SELECT *
-      fprintf(stdout, "%d '%s'\n", key, value.c_str());
-      break;
-    }
-
-    // move to the next tuple
-    next_tuple:
-    ++rid;
-  }
-
-  // print matching tuple count if "select count(*)"
-  if (attr == 4) {
-    fprintf(stdout, "%d\n", count);
-  }
-  rc = 0;
-
-  // close the table file and return
-  exit_select:
-  rf.close();
-  return rc;
 }
 
 // TODO: For part A, we assume index is always false and ignore it.
@@ -157,14 +157,34 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         ifstream load; 
         load.open(loadfile.c_str( ));
         if (load.is_open()) {
-            int key; 
-            string value;
+            int key = -1; 
+            string value = "";
             RecordId rid;
+            rid.pid = -1; // PageID
+            rid.sid = -1; // SlotID
 
+            int count = 0; 
             // Load a line into 'line'
             while(getline(load, line)) {
                 // Parse 'line' and load it into the RecordFile
+                if (count < 3) {
+                    cerr << endl << "BEFORE parsing: " << endl;
+                    cerr << "Line: " << line << endl;
+                    cerr << "Key: " << key << endl;
+                    cerr << "Value: " << value << endl;
+                }
+
+                // TODO: Remove debugging output
                 parseLoadLine(line, key, value);
+
+                if (count < 3) {
+                    cerr << endl << "AFTER parsing: " << endl;
+                    cerr << "Key: " << key << endl;
+                    cerr << "Value: " << value << endl;
+                    cerr << "Page ID: " << rid.pid << endl;
+                    cerr << "Slot ID: " << rid.sid << endl;
+                    count++;
+                }
                 recFile.append(key, value, rid);
             }
         }
@@ -174,11 +194,10 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         }
 
         load.close();
+        recFile.close();
     }
 
-
-
-  return 0;
+    return 0;
 }
 
 // Takes a raw input line from the loadfile, 
@@ -188,7 +207,7 @@ RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
     const char *s;
     char        c;
     string::size_type loc;
-    
+
     // ignore beginning white spaces
     c = *(s = line.c_str());
     while (c == ' ' || c == '\t') { c = *++s; }
@@ -202,7 +221,7 @@ RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
 
     // ignore white spaces
     do { c = *++s; } while (c == ' ' || c == '\t');
-    
+
     // if there is nothing left, set the value to empty string
     if (c == 0) { 
         value.erase();
