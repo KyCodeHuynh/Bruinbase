@@ -1,8 +1,9 @@
 #!/bin/bash
 
-printf "Testing: LOAD\n\n"
+printf "\n==Testing: LOAD==\n"
 test3=$(./bruinbase << EOF
-LOAD NewMovie FROM 'movie.del')
+LOAD NewMovie FROM 'movie.del'
+EOF)
 
 diff=$(diff movie.tbl newmovie.tbl)
 if [ "$diff" != "" ]

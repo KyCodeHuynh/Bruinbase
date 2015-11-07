@@ -5,9 +5,10 @@
 # since we can only append, and not edit/delete/prevent duplicates.
 # Instead, we load into a different file. Later, we'll see if 
 # SELECT's on the indexed table are faster.
-printf "Testing: LOAD WITH INDEX\n\n"
-test4=$(./bruinbase << ''
-LOAD IndexMovie FROM 'movie.del' WITH INDEX)
+printf "\n==Testing: LOAD WITH INDEX==\n"
+test4=$(./bruinbase << EOF
+LOAD IndexMovie FROM 'movie.del' WITH INDEX
+EOF)
 
 diff=$(diff movie.tbl indexmovie.tbl)
 if [ "$diff" != "" ]
