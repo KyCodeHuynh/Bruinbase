@@ -38,4 +38,4 @@ bruinbase
 bruinbase.dSYM/*
 lex.sql.c
 *.swp
-movie.tbl
+newmovie.tbl

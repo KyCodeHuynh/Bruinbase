@@ -24,10 +24,10 @@ printf "$test2\n\n"
 printf "Testing: LOAD\n\n"
 printf "Test 3\n"
 test3=$(./bruinbase << ''
-LOAD Movie FROM 'movie.del')
+LOAD NewMovie FROM 'movie.del')
 printf "$test3\n\n"
 
 printf "Test 4\n"
 test4=$(./bruinbase << ''
-LOAD Movie FROM 'movie.del' WITH INDEX)
+LOAD NewMovie FROM 'movie.del' WITH INDEX)
 printf "$test4\n\n"
