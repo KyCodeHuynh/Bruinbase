@@ -155,7 +155,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
         string line;
         ifstream load; 
-        load.open(loadfile.c_str());
+        load.open(loadfile.c_str( ));
         if (load.is_open()) {
             int key; 
             string value;

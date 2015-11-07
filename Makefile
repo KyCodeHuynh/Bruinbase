@@ -10,8 +10,9 @@ lex.sql.c: SqlParser.l
 SqlParser.tab.c: SqlParser.y
 	bison -d -psql $<
 
+# TODO: Comment out before submission, just in case TA uses this Makefile
 test: $@
-	./queries.sh
+	bash queries.sh
 
 clean:
 	rm -f bruinbase bruinbase.exe *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h 
