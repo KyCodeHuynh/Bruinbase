@@ -4,6 +4,7 @@
 # Quick primer on Bash scripts: http://learnxinyminutes.com/docs/bash/
 
 # Variables are referenced using names and dynamically typed
+printf "Testing: SELECT\n\n"
 printf "Test 1\n"
 test1=$(./bruinbase << ''
 SELECT * FROM Movie WHERE key > 1000 AND key < 1010 
@@ -18,4 +19,16 @@ test2=$(./bruinbase << ''
 SELECT COUNT(*) FROM Movie
 QUIT)
 printf "$test2\n\n"
+
+
+printf "Testing: LOAD\n\n"
+printf "Test 3\n"
+test3=$(./bruinbase << ''
+LOAD Movie FROM 'movie.del')
+printf "$test3\n\n"
+
+printf "Test 4\n"
+test4=$(./bruinbase << ''
+LOAD Movie FROM 'movie.del' WITH INDEX)
+printf "$test4\n\n"
 

@@ -154,7 +154,8 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         // Open loadfile for reading only; ofstream does output; fstream does both
         // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
         string line;
-        ifstream load(loadfile);
+        ifstream load; 
+        load.open(loadfile);
         if (load.is_open()) {
             int key; 
             string value;
