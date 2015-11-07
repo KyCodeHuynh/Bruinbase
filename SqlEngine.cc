@@ -145,8 +145,35 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 
     // Automatically creates file if it does not exist; open in writing mode
     RecordFile recFile;
-    // TODO: Handle error case, when retCode < 0
-    RC retCode = recFile.open(table + ".tbl", 'w');
+    RC retCode = 0;
+    if ((retCode = recFile.open(table + ".tbl", 'w')) < 0) {
+        fprintf(stderr, "Could not open/create file %s.tbl for writing\n", table.c_str());
+        return retCode;
+    }
+    else {
+        // Open loadfile for reading only; ofstream does output; fstream does both
+        // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
+        string line;
+        ifstream load(loadfile);
+        if (load.is_open()) {
+            int key; 
+            string value;
+            RecordId rid;
+
+            // Load a line into 'line'
+            while(getline(load, line)) {
+                // Parse 'line' and load it into the RecordFile
+                parseLoadLine(line, key, value);
+                recFile.append(key, value, rid);
+            }
+        }
+        else {
+            fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
+            return RC_FILE_OPEN_FAILED;
+        }
+
+        load.close();
+    }
 
 
 
