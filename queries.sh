@@ -31,4 +31,3 @@ printf "Test 4\n"
 test4=$(./bruinbase << ''
 LOAD Movie FROM 'movie.del' WITH INDEX)
 printf "$test4\n\n"
-
