@@ -38,4 +38,5 @@ bruinbase
 bruinbase.dSYM/*
 lex.sql.c
 *.swp
-./unit-tests/*.tbl
+indexmovie.tbl
+newmovie.tbl

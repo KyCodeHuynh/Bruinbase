@@ -11,7 +11,7 @@ SqlParser.tab.c: SqlParser.y
 	bison -d -psql $<
 
 # TODO: Comment out before submission, just in case TA uses this Makefile
-test: $@
+test: bruinbase
 	bash queries.sh
 
 clean:
