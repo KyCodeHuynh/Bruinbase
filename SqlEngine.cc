@@ -163,28 +163,10 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
             rid.pid = -1; // PageID
             rid.sid = -1; // SlotID
 
-            int count = 0; 
             // Load a line into 'line'
             while(getline(load, line)) {
                 // Parse 'line' and load it into the RecordFile
-                if (count < 3) {
-                    cerr << endl << "BEFORE parsing: " << endl;
-                    cerr << "Line: " << line << endl;
-                    cerr << "Key: " << key << endl;
-                    cerr << "Value: " << value << endl;
-                }
-
-                // TODO: Remove debugging output
                 parseLoadLine(line, key, value);
-
-                if (count < 3) {
-                    cerr << endl << "AFTER parsing: " << endl;
-                    cerr << "Key: " << key << endl;
-                    cerr << "Value: " << value << endl;
-                    cerr << "Page ID: " << rid.pid << endl;
-                    cerr << "Slot ID: " << rid.sid << endl;
-                    count++;
-                }
                 recFile.append(key, value, rid);
             }
         }
