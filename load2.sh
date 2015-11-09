@@ -6,9 +6,9 @@
 # Instead, we load into a different file. Later, we'll see if 
 # SELECT's on the indexed table are faster.
 printf "\n==Testing: LOAD WITH INDEX==\n"
-test4=$(./bruinbase << EOF
+test4=$(./bruinbase << END
 LOAD IndexMovie FROM 'movie.del' WITH INDEX
-EOF)
+END)
 
 diff=$(diff movie.tbl indexmovie.tbl)
 if [ "$diff" != "" ]

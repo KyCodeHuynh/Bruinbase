@@ -1,9 +1,9 @@
 #!/bin/bash
 
 printf "\n==Testing: LOAD==\n"
-test3=$(./bruinbase << EOF
+test3=$(./bruinbase << END
 LOAD NewMovie FROM 'movie.del'
-EOF)
+END)
 
 diff=$(diff movie.tbl newmovie.tbl)
 if [ "$diff" != "" ]
