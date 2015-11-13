@@ -12,7 +12,7 @@ END)
 
 diff=$(diff movie.tbl indexmovie.tbl)
 if [ "$diff" != "" ]
-    then
+then
     echo "movie.tbl and indexmovie.tbl differ"
     exit 1
 else

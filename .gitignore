@@ -40,3 +40,4 @@ lex.sql.c
 *.swp
 indexmovie.tbl
 newmovie.tbl
+node-test
