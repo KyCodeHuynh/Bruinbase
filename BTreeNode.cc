@@ -3,13 +3,19 @@
 using namespace std;
 
 /*
- * Read the content of the node from the page pid in the PageFile pf.
+ * Read the content of the node from the page pid in the PageFile pf
+ * into our internal buffer
  * @param pid[IN] the PageId to read
  * @param pf[IN] PageFile to read from
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{ 
+    // PageFile can read contents of a PageID into a buffer.
+    // It will also give the appropriate return code.
+    // PageID is something managed in SqlEngine.
+    return pf.read(pid, buffer);
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
@@ -18,14 +24,20 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{ 
+    // Write the contents of buffer to the page specified by PageID
+    // Our internal buffer is where we modify the node contents.
+    pf.write(pid, buffer); 
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTLeafNode::getKeyCount()
-{ return 0; }
+{ 
+    return m_numKeys;
+}
 
 /*
  * Insert a (key, rid) pair to the node.
@@ -88,6 +100,10 @@ PageId BTLeafNode::getNextNodePtr()
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
 { return 0; }
+
+
+////// Start non-leaf node implementation
+
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.

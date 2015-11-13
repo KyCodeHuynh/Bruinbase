@@ -10,6 +10,8 @@
 #ifndef BTREENODE_H
 #define BTREENODE_H
 
+#include <cstring>
+
 #include "RecordFile.h"
 #include "PageFile.h"
 
@@ -18,6 +20,12 @@
  */
 class BTLeafNode {
   public:
+
+    BTLeafNode()
+    {
+        m_numKeys = 0;
+        memset(buffer, 0, PageFile::PAGE_SIZE);
+    }
    /**
     * Insert the (key, rid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -103,7 +111,9 @@ class BTLeafNode {
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.
     */
-    char buffer[PageFile::PAGE_SIZE];
+    char buffer[PageFile::PAGE_SIZE];   
+    // TODO: Store this on disk somehow!
+    int m_numKeys;
 }; 
 
 
