@@ -54,6 +54,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 {
     // TODO: Leaf nodes hold (key, RecordID) entries,
     // and we need to keep the entries sorted by their keys
+    // NOTE: First sizeof(int) + sizeof(PageId) bytes are reserved
     int index = getKeyCount();
 
     return 0; 
@@ -133,8 +134,8 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     // the first sizeof(int) bytes in the internal buffer. 
     // Pointer arithmetic moves us forward by the sizeof(dataType) 
     // for each +1 increment. We have chars though, so everything
-    // is 1 byte. 
-    memcpy(buffer + sizeof(int)), buffer, sizeof(PageId));
+    // is 1 byte.   
+    memcpy(&(buffer + sizeof(int)), buffer, sizeof(PageId));
     return 0; 
 }
 

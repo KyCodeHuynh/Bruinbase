@@ -23,7 +23,6 @@ class BTLeafNode {
 
     BTLeafNode()
     {
-        m_numKeys = 0;
         memset(buffer, 0, PageFile::PAGE_SIZE);
     }
    /**
