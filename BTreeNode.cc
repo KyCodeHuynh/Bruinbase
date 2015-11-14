@@ -4,9 +4,10 @@ using namespace std;
 
 /*
  * Read the content of the node from the page pid in the PageFile pf
- * into our internal buffer
+ * into our internal buffer. The PageFile pf is part of
+ * the BTreeIndex class; each node occupies a page.
  * @param pid[IN] the PageId to read
- * @param pf[IN] PageFile to read from
+ * @param pf[IN] PageFile to read from (internal PageFile for B+ tree)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
@@ -20,7 +21,7 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
 /*
  * Write the content of the node to the page pid in the PageFile pf.
  * @param pid[IN] the PageId to write to
- * @param pf[IN] PageFile to write to
+ * @param pf[IN] PageFile to write to (internal one for our B+ tree)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
@@ -36,7 +37,11 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
  */
 int BTLeafNode::getKeyCount()
 { 
-    return m_numKeys;
+    // Key count is the first sizeof(int) bytes of the buffer
+    int numKeys = 0; 
+    memcpy(&numKeys, buffer, sizeof(int));
+
+    return numKeys;
 }
 
 /*
@@ -46,7 +51,13 @@ int BTLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
-{ return 0; }
+{
+    // TODO: Leaf nodes hold (key, RecordID) entries,
+    // and we need to keep the entries sorted by their keys
+    int index = getKeyCount();
+
+    return 0; 
+}
 
 /*
  * Insert the (key, rid) pair to the node
@@ -60,7 +71,9 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
  */
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
-{ return 0; }
+{ 
+    return 0; 
+}
 
 /**
  * If searchKey exists in the node, set eid to the index entry
@@ -74,32 +87,56 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
  * @return 0 if searchKey is found. Otherwise return an error code.
  */
 RC BTLeafNode::locate(int searchKey, int& eid)
-{ return 0; }
+{ 
+    // TODO: Linear search of entries for matching key
+    // Return its index within the node in the 'eid' parameter
+
+    // TODO: Replace with binary search
+    return 0; 
+}
 
 /*
  * Read the (key, rid) pair from the eid entry.
+ * eid is the index number of the sought-for key in this node
  * @param eid[IN] the entry number to read the (key, rid) pair from
  * @param key[OUT] the key from the entry
  * @param rid[OUT] the RecordId from the entry
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
-{ return 0; }
+{ 
+    // TODO: Given an entry index number, read out its (key, RecordID) pair
+    // from this node
+    return 0; 
+}
 
 /*
- * Return the pid of the next slibling node.
+ * Return the pid of the next sibling node.
  * @return the PageId of the next sibling node 
  */
 PageId BTLeafNode::getNextNodePtr()
-{ return 0; }
+{ 
+    // TODO: Return internally stored pointer to next sibling
+    return 0; 
+}
 
 /*
- * Set the pid of the next slibling node.
+ * Set the pid of the next sibling node. Assumes 
+ * internal buffer loaded with contents of node.
  * @param pid[IN] the PageId of the next sibling node 
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
-{ return 0; }
+{ 
+    // Only BTreeIndex has the informational context for this
+    // We copy this into the next sizeof(PageId) bytes after 
+    // the first sizeof(int) bytes in the internal buffer. 
+    // Pointer arithmetic moves us forward by the sizeof(dataType) 
+    // for each +1 increment. We have chars though, so everything
+    // is 1 byte. 
+    memcpy(buffer + sizeof(int)), buffer, sizeof(PageId));
+    return 0; 
+}
 
 
 ////// Start non-leaf node implementation

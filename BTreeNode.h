@@ -107,13 +107,29 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+    struct LeafEntry {
+        int key; 
+        RecordId rid;
+    };
+
+    // Now we can use "LeafEntry" to declare a new instance, 
+    // rather than "struct LeafEntry"
+    typedef struct LeafEntry LeafEntry;
+
    /**
     * The main memory buffer for loading the content of the disk page 
-    * that contains the node.
+    * that contains the node. It is composed of (key, RecordID) pairs,
+    * stored as LeafEntry structs.
+    *
+    * The first sizeof(int) bytes of the buffer are reserved for 
+    * holding the number of keys in the buffer. The next sizeof(PageId) 
+    * bytes after that will hold the PageId of the next sibling node. 
+    * The remaining bytes will fit 
+    * floor( (1024 - (sizeof(int) + sizeof(PageId)) / sizeof(LeafEntry) ) entries. 
+    * That is, we pack the entries into the space left over. Any wasted
+    * empty space at the end of the buffer/node is left as is. 
     */
-    char buffer[PageFile::PAGE_SIZE];   
-    // TODO: Store this on disk somehow!
-    int m_numKeys;
+    char buffer[PageFile::PAGE_SIZE];       
 }; 
 
 
