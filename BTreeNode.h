@@ -69,7 +69,7 @@ class BTLeafNode {
     */
     RC readEntry(int eid, int& key, RecordId& rid);
 
-   /**      
+   /**
     * Return the pid of the next slibling node.
     * @return the PageId of the next sibling node 
     */

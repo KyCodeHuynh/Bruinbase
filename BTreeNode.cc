@@ -48,17 +48,33 @@ int BTLeafNode::getKeyCount()
 }
 
 /*
- * Insert a (key, rid) pair to the node.
+ * Insert a (key, rid) pair to the node. Assumes no duplicate keys inserted.
  * @param key[IN] the key to insert
  * @param rid[IN] the RecordId to insert
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
 {
-    // TODO: Leaf nodes hold (key, RecordID) entries,
-    // and we need to keep the entries sorted by their keys
-    // NOTE: First sizeof(int) + sizeof(PageId) bytes are reserved
-    int i = getKeyCount();
+    // Leaf nodes hold (key, RecordID) entries, held in LeafEntry instances
+    // Alas, C++ does not support tagged initialization like C99
+    LeafEntry newEntry = { key, rid };
+    
+    // NOTE: The first sizeof(int) + sizeof(PageId) bytes are reserved
+    // for the key count and next sibling PageId
+    int offset = sizeof(int) + sizeof(PageId);
+    int numKeys = getKeyCount();
+    int bytesUsed = offset + (numKeys * sizeof(LeafEntry));
+
+    // Check if node full, i.e., we don't have space
+    // for another LeafEntry. 
+    if ((PageFile::PAGE_SIZE - bytesUsed) < 0) {
+        return RC_NODE_FULL;
+    }
+
+    // TODO: We need to keep the entries sorted by their keys
+    // Implementing insertion sort initially, which is O(n^2)
+    // TODO: Replace with in-place quicksort? 
+
 
     return 0; 
 }
