@@ -13,7 +13,7 @@ int main()
     PageFile pf("node-test.txt", 'w');
     assert(pf.getPageReadCount() == 0);
     assert(pf.getPageWriteCount() == 0);
-    assert(pf.endPid() == 0); 
+    // assert(pf.endPid() == 0); 
 
     // The leaf node itself, which has just zeroed-out
     // internal buffer initially. 
@@ -40,7 +40,10 @@ int main()
     assert(leafNode.getKeyCount() == 0); 
     assert((int)leafNode.getNextNodePtr() == 0); 
 
-
+    // Now try setting the sibling PageId/pointer 
+    // to an arbitrary PageId and getting it back
+    assert(leafNode.setNextNodePtr(10) == 0);
+    assert(leafNode.getNextNodePtr() == 10);
 
     pf.close();
     return 0;

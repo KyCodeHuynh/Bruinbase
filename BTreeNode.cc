@@ -137,7 +137,7 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     // Pointer arithmetic moves us forward by the sizeof(dataType) 
     // for each +1 increment. We have chars though, so everything
     // is 1 byte.   
-    memcpy((buffer + sizeof(int)), buffer, sizeof(PageId));
+    memcpy((buffer + sizeof(int)), &pid, sizeof(PageId));
     return 0; 
 }
 
