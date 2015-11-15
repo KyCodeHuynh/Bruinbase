@@ -12,6 +12,9 @@ using namespace std;
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
 { 
+    if (pid < 0) {
+        return RC_INVALID_PID;
+    }
     // PageFile can read contents of a PageID into a buffer.
     // It will also give the appropriate return code.
     // PageID is something managed in SqlEngine.
@@ -131,6 +134,9 @@ PageId BTLeafNode::getNextNodePtr()
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
 { 
+    if (pid < 0) {
+        return RC_INVALID_PID;
+    }
     // Only BTreeIndex has the informational context for this
     // We copy this into the next sizeof(PageId) bytes after 
     // the first sizeof(int) bytes in the internal buffer. 

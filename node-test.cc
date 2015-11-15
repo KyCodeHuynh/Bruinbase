@@ -40,10 +40,16 @@ int main()
     assert(leafNode.getKeyCount() == 0); 
     assert((int)leafNode.getNextNodePtr() == 0); 
 
+    // But this read with an invalid PageId should fail
+    assert(leafNode.read(-1, pf) == RC_INVALID_PID);
+
     // Now try setting the sibling PageId/pointer 
     // to an arbitrary PageId and getting it back
     assert(leafNode.setNextNodePtr(10) == 0);
     assert(leafNode.getNextNodePtr() == 10);
+
+    // An invalid PageId should fail
+    assert(leafNode.setNextNodePtr(-1) == RC_INVALID_PID);
 
     pf.close();
     return 0;
