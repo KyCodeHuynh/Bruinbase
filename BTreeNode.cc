@@ -28,7 +28,7 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
 { 
     // Write the contents of buffer to the page specified by PageID
     // Our internal buffer is where we modify the node contents.
-    pf.write(pid, buffer); 
+    return pf.write(pid, buffer); 
 }
 
 /*
@@ -55,7 +55,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     // TODO: Leaf nodes hold (key, RecordID) entries,
     // and we need to keep the entries sorted by their keys
     // NOTE: First sizeof(int) + sizeof(PageId) bytes are reserved
-    int index = getKeyCount();
+    int i = getKeyCount();
 
     return 0; 
 }
@@ -117,8 +117,10 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
  */
 PageId BTLeafNode::getNextNodePtr()
 { 
-    // TODO: Return internally stored pointer to next sibling
-    return 0; 
+    // Return internally stored pointer to next sibling
+    PageId retVal; 
+    memcpy(&retVal, (buffer + sizeof(int)), sizeof(PageId));
+    return retVal; 
 }
 
 /*
@@ -135,7 +137,7 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     // Pointer arithmetic moves us forward by the sizeof(dataType) 
     // for each +1 increment. We have chars though, so everything
     // is 1 byte.   
-    memcpy(&(buffer + sizeof(int)), buffer, sizeof(PageId));
+    memcpy((buffer + sizeof(int)), buffer, sizeof(PageId));
     return 0; 
 }
 
