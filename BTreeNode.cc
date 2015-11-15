@@ -47,6 +47,15 @@ int BTLeafNode::getKeyCount()
     return numKeys;
 }
 
+RC BTLeafNode::setKeyCount(int numKeys)
+{
+    int numKeysCopy = numKeys;
+    memcpy(buffer, &numKeysCopy, sizeof(int));
+
+    // TODO: Error cases? 
+    return 0;
+}
+
 /*
  * Insert a (key, rid) pair to the node. Assumes no duplicate keys inserted.
  * @param key[IN] the key to insert
@@ -72,9 +81,64 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     }
 
     // TODO: We need to keep the entries sorted by their keys
-    // Implementing insertion sort initially, which is O(n^2)
-    // TODO: Replace with in-place quicksort? 
+    // This is basically the problem of insertion into 
+    // a sorted array (and keeping it sorted). 
+    // Conventionally, there are two approaches, with the
+    // second being a natural improvement on the first: 
+    //
+    // 1. Brute force. We scan linearly from the beginning 
+    //    to find the appropriate spot for the new element, 
+    //    then shift over all the succeeding elements to make
+    //    space for the new one. 
+    //
+    // 2. Smarter search. We use binary search to find the spot 
+    //    and then shift over for insertion. 
+    //
+    // However, there is actually a third approach: 
+    //
+    // 3. Shift as we go. Starting from the empty space just after
+    //    the last sorted element, we check if the new element can 
+    //    be inserted there. If not, we shift over the last element, 
+    //    and check if the new element can be inserted into the spot freed up.
+    //    We do so until until find a spot or hit the beginning of the array, 
+    //    which is the special case of pre-pending. This approach is very nice
+    //    for when we're making a fully-sorted list out of a nearly-sorted one. 
+    //    Since we'd begin with an initially empty array, most of the initial 
+    //    insertions would be instant, as we'd be appending the biggest number. 
+    //
+    // Of course, with any approach, we should first check if
+    // the array/buffer is full, if the new element is invalid 
+    // or a duplicate, etc. Here, we assume no duplicates, 
+    // and keys may be 0 or negative. 
 
+    // We just need numbers, rather than pointers, 
+    // as we have an array of chars, so we can move around
+    // in terms of buffer +/- number of bytes/chars. 
+    int indexLast = bytesUsed;
+    int indexFirst = offset; 
+    int indexCur = indexLast; 
+
+    // The preceding value, initially the last sorted value
+    LeafEntry valPrev;
+
+    // Keep in mind that a[i] == *(a + i)
+    // so we need to take address-of to get 
+    // a pointer to a char rather than an actual char
+    memcpy(&valPrev, &buffer[indexLast - sizeof(LeafEntry)], sizeof(LeafEntry));
+
+    // Keep going while our new key is not in position
+    // or we haven't hit the beginning
+    while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
+        memmove(&buffer[indexCur], &buffer[indexCur - sizeof(LeafEntry)], sizeof(LeafEntry));
+        indexCur = indexCur - sizeof(LeafEntry);
+    }
+
+    // If we're here, we've found the insertion spot for our arguments
+    LeafEntry newItem = { key, rid };
+    memcpy(&buffer[indexCur], &newItem, sizeof(LeafEntry));
+
+    // Don't forget to update the key count!
+    setKeyCount(getKeyCount() + 1);
 
     return 0; 
 }
