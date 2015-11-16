@@ -219,6 +219,14 @@ class BTNonLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+    struct NonLeafEntry {
+        int key; 
+        PageId pid;
+    };
+
+    // Now we can use "NonLeafEntry" to declare a new instance, 
+    // rather than "struct NonLeafEntry"
+    typedef struct NonLeafEntry NonLeafEntry;
    /**
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.

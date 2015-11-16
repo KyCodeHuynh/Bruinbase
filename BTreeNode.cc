@@ -396,7 +396,29 @@ RC BTNonLeafNode::setKeyCount(int numKeys)
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
-{ return 0; }
+{
+    // Leaf nodes hold (key, RecordID) entries, held in LeafEntry instances
+    // Alas, C++ does not support tagged initialization like C99
+    NonLeafEntry newEntry = { key, pid };
+    
+    // NOTE: The first sizeof(int) + sizeof(PageId) bytes are reserved
+    // for the key count and next sibling PageId
+    int offset = sizeof(int) + sizeof(PageId);
+    int numKeys = getKeyCount();
+    int bytesUsed = offset + (numKeys * sizeof(NonLeafEntry));
+
+    // Check if node full, i.e., we don't have space
+    // for another LeafEntry. 
+    if ((PageFile::PAGE_SIZE - bytesUsed) < 0) {
+        return RC_NODE_FULL;
+    }
+
+
+    // Don't forget to update the key count!
+    setKeyCount(getKeyCount() + 1);
+
+    return 0; 
+}
 
 /*
  * Insert the (key, pid) pair to the node
