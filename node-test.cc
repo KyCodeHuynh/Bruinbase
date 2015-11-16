@@ -51,6 +51,9 @@ int main()
     // An invalid PageId should fail
     assert(leafNode.setNextNodePtr(-1) == RC_INVALID_PID);
 
+
+    /// TESTING: insert()
+
     // Empty node initially, so insertion should succeed
     int key = 10; 
     // PageId 1, SlotId 0
@@ -140,6 +143,28 @@ int main()
         memcpy(&manyInserted, &buffer[manyInsertPoint], sizeof(LeafEntry));
     }
     assert(leafNode.getKeyCount() == 71);
+
+    /// TESTING: locate()
+
+    // We should now have: -1, 10, 12, 15, 42, 43, .., 109
+    // int eid = -1; 
+    // int searchKey = -1;
+    // assert(leafNode.locate(searchKey, eid) == 0);
+    // assert(eid == 0);
+
+    // eid = -1; 
+    // searchKey = 10; 
+    // assert(leafNode.locate(searchKey, eid) == 0):
+    // assert(eid == 1); 
+
+    // // Does not exist
+    // eid = -1; 
+    // searchKey = 13
+
+
+    /// TESTING: readEntry()
+    
+
 
     pf.close();
     return 0;

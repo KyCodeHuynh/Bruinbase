@@ -171,8 +171,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
  * If searchKey exists in the node, set eid to the index entry
  * with searchKey and return 0. If not, set eid to the index entry
  * immediately after the largest index key that is smaller than searchKey,
+ * (i.e., the closest approximate index number)
  * and return the error code RC_NO_SUCH_RECORD.
- * Remember that keys inside a B+tree node are always kept sorted.
+ * Remember that keys inside a B+ tree node are always kept sorted.
  * @param searchKey[IN] the key to search for.
  * @param eid[OUT] the index entry number with searchKey or immediately
                    behind the largest key smaller than searchKey.
@@ -182,9 +183,39 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 { 
     // TODO: Linear search of entries for matching key
     // Return its index within the node in the 'eid' parameter
+    int offset = sizeof(int) + sizeof(PageId); 
+    LeafEntry entry; 
+   
 
-    // TODO: Replace with binary search
-    return 0; 
+    int searchPoint = offset; 
+    int searchIndex = 0;
+
+    while (searchPoint < (getKeyCount() * sizeof(LeafEntry))) {
+        memcpy(&entry, &buffer[searchPoint], sizeof(LeafEntry));
+
+        // Found the entry
+        if (entry.key == searchKey) {
+            eid = searchIndex;
+            return 0;
+        }
+
+        // Since we're proceeding left-to-right in a sorted list, 
+        // then a current entry key greater than our searchKey
+        // implies that our sought-for key is not in this node.
+        // Set eid to the index of the node with the largest key 
+        // smaller than searchKey
+        if (searchKey < entry.key) {
+            eid = searchIndex - 1;
+            return RC_NO_SUCH_RECORD;
+        }
+
+        searchPoint += sizeof(LeafEntry);
+        searchIndex += 1;
+    }
+        
+
+    // TODO: Replace with binary search, if time permits
+    return RC_NO_SUCH_RECORD; 
 }
 
 /*
@@ -197,8 +228,20 @@ RC BTLeafNode::locate(int searchKey, int& eid)
  */
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 { 
-    // TODO: Given an entry index number, read out its (key, RecordID) pair
-    // from this node
+    // TODO: Given an entry index number, read out its 
+    // (key, RecordID) pair from this node
+
+    // Negative or overly large entry index? 
+    if (eid < 0 || eid > (getKeyCount() - 1)) {
+        return RC_NO_SUCH_RECORD;
+    }
+
+    int offset = sizeof(int) + sizeof(PageId);
+    LeafEntry entry; 
+    memcpy(&entry, &buffer[offset + eid * sizeof(LeafEntry)], sizeof(LeafEntry));
+    key = entry.key;
+    rid = entry.rid;
+
     return 0; 
 }
 
