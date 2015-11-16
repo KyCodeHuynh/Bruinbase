@@ -202,7 +202,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     // everything from midpoint onward. 
     LeafEntry copy;
     for (int copyIndex = midpoint; copyIndex < indexLast; copyIndex += sizeof(LeafEntry)) {
-        memcpy(copy, &buffer[copyIndex], sizeof(LeafEntry));
+        memcpy(&copy, &buffer[copyIndex], sizeof(LeafEntry));
         sibling.insert(copy.key, copy.rid);
     }
 
