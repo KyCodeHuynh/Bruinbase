@@ -109,10 +109,37 @@ int main()
     assert(inserted.rid.pid == 4);
     assert(inserted.rid.sid == 5);
 
-    // Need to be able to insert at least 70 keys
-    // We've inserted 3 so far, so let's 67 more.
-    assert(leafNode.getKeyCount() == 3);
+    // This negative key should go first: -1, 10, 12, 15
+    key = -1; 
+    rid.pid = 5; 
+    rid.sid = 6;
+    insertPoint = offset;
+    assert(leafNode.insert(key, rid) == 0);
+    leafNode.write(0, pf);
+    pf.read(0, buffer);
+    memcpy(&inserted, &buffer[insertPoint], sizeof(LeafEntry));
+    // printf("Key at second entry: %d\n", inserted.key);
+    assert(inserted.key == -1);
+    assert(inserted.rid.pid == 5);
+    assert(inserted.rid.sid == 6);
 
+    // Need to be able to insert at least 70 keys
+    // We've inserted 4 so far, so let's insert 67 more for 71 total
+    assert(leafNode.getKeyCount() == 4);
+    int manyKey = 42;
+    RecordId manyRID; 
+    manyRID.pid = 6; 
+    manyRID.sid = 7;
+    int manyInsertPoint = 0;
+    LeafEntry manyInserted;
+    for (int i = 0; i < 67; i++) {
+        manyInsertPoint = offset + (leafNode.getKeyCount() * sizeof(LeafEntry));
+        assert(leafNode.insert(manyKey, manyRID) == 0);
+        leafNode.write(0, pf);
+        pf.read(0, buffer);
+        memcpy(&manyInserted, &buffer[manyInsertPoint], sizeof(LeafEntry));
+    }
+    assert(leafNode.getKeyCount() == 71);
 
     pf.close();
     return 0;
