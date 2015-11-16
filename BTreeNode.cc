@@ -80,7 +80,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
         return RC_NODE_FULL;
     }
 
-    // TODO: We need to keep the entries sorted by their keys
+    // We need to keep the entries sorted by their keys
     // This is basically the problem of insertion into 
     // a sorted array (and keeping it sorted). 
     // Conventionally, there are two approaches, with the
@@ -114,8 +114,8 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     // We just need numbers, rather than pointers, 
     // as we have an array of chars, so we can move around
     // in terms of buffer +/- number of bytes/chars. 
-    int indexLast = bytesUsed;
-    int indexFirst = offset; 
+    int indexFirst = sizeof(int) + sizeof(PageId);
+    int indexLast = indexFirst + (getKeyCount() * sizeof(LeafEntry));
     int indexCur = indexLast; 
 
     // The preceding value, initially the last sorted value
@@ -130,10 +130,18 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     // or we haven't hit the beginning
     while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
         memmove(&buffer[indexCur], &buffer[indexCur - sizeof(LeafEntry)], sizeof(LeafEntry));
+
+        // Update index and value to compare against, which moves us leftward
+        // Without this, only the first two insertions work, as the remaining
+        // ones always compare against the last element (as we would have forgotten
+        // to update valPrev), leading to inaccurate placement.
         indexCur = indexCur - sizeof(LeafEntry);
+        memcpy(&valPrev, &buffer[indexCur - sizeof(LeafEntry)], sizeof(LeafEntry));   
     }
 
-    // If we're here, we've found the insertion spot for our arguments
+    // If we're here, we've found the insertion spot for our arguments.
+    // Note that LeafEntry is composed of two ints, so struct alignment
+    // by compiler is not an issue. 
     LeafEntry newItem = { key, rid };
     memcpy(&buffer[indexCur], &newItem, sizeof(LeafEntry));
 
