@@ -397,7 +397,7 @@ RC BTNonLeafNode::setKeyCount(int numKeys)
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
 {
-    // Leaf nodes hold (key, RecordID) entries, held in LeafEntry instances
+    // Non-Leaf nodes hold (key, PageID) entries, held in NonLeafEntry instances
     // Alas, C++ does not support tagged initialization like C99
     NonLeafEntry newEntry = { key, pid };
     
@@ -413,6 +413,36 @@ RC BTNonLeafNode::insert(int key, PageId pid)
         return RC_NODE_FULL;
     }
 
+    int indexFirst = sizeof(int) + sizeof(PageId);
+    int indexLast = indexFirst + (getKeyCount() * sizeof(NonLeafEntry));
+    int indexCur = indexLast; 
+
+    // The preceding value, initially the last sorted value
+    NonLeafEntry valPrev;
+
+    // Keep in mind that a[i] == *(a + i)
+    // so we need to take address-of to get 
+    // a pointer to a char rather than an actual char
+    memcpy(&valPrev, &buffer[indexLast - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
+
+    // Keep going while our new key is not in position
+    // or we haven't hit the beginning
+    while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
+        memmove(&buffer[indexCur], &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
+
+        // Update index and value to compare against, which moves us leftward
+        // Without this, only the first two insertions work, as the remaining
+        // ones always compare against the last element (as we would have forgotten
+        // to update valPrev), leading to inaccurate placement.
+        indexCur = indexCur - sizeof(NonLeafEntry);
+        memcpy(&valPrev, &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));   
+    }
+
+    // If we're here, we've found the insertion spot for our arguments.
+    // Note that LeafEntry is composed of two ints, so struct alignment
+    // by compiler is not an issue. 
+    NonLeafEntry newItem = { key, pid };
+    memcpy(&buffer[indexCur], &newItem, sizeof(NonLeafEntry));
 
     // Don't forget to update the key count!
     setKeyCount(getKeyCount() + 1);
