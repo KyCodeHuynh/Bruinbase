@@ -397,18 +397,13 @@ RC BTNonLeafNode::setKeyCount(int numKeys)
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
 {
-    // Non-Leaf nodes hold (key, PageID) entries, held in NonLeafEntry instances
-    // Alas, C++ does not support tagged initialization like C99
     NonLeafEntry newEntry = { key, pid };
     
-    // NOTE: The first sizeof(int) + sizeof(PageId) bytes are reserved
-    // for the key count and next sibling PageId
     int offset = sizeof(int) + sizeof(PageId);
     int numKeys = getKeyCount();
     int bytesUsed = offset + (numKeys * sizeof(NonLeafEntry));
 
     // Check if node full, i.e., we don't have space
-    // for another LeafEntry. 
     if ((PageFile::PAGE_SIZE - bytesUsed) < 0) {
         return RC_NODE_FULL;
     }
@@ -417,12 +412,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
     int indexLast = indexFirst + (getKeyCount() * sizeof(NonLeafEntry));
     int indexCur = indexLast; 
 
-    // The preceding value, initially the last sorted value
     NonLeafEntry valPrev;
-
-    // Keep in mind that a[i] == *(a + i)
-    // so we need to take address-of to get 
-    // a pointer to a char rather than an actual char
     memcpy(&valPrev, &buffer[indexLast - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
 
     // Keep going while our new key is not in position
@@ -430,17 +420,10 @@ RC BTNonLeafNode::insert(int key, PageId pid)
     while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
         memmove(&buffer[indexCur], &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
 
-        // Update index and value to compare against, which moves us leftward
-        // Without this, only the first two insertions work, as the remaining
-        // ones always compare against the last element (as we would have forgotten
-        // to update valPrev), leading to inaccurate placement.
         indexCur = indexCur - sizeof(NonLeafEntry);
         memcpy(&valPrev, &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));   
     }
 
-    // If we're here, we've found the insertion spot for our arguments.
-    // Note that LeafEntry is composed of two ints, so struct alignment
-    // by compiler is not an issue. 
     NonLeafEntry newItem = { key, pid };
     memcpy(&buffer[indexCur], &newItem, sizeof(NonLeafEntry));
 
@@ -461,7 +444,74 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
-{ return 0; }
+{
+    int offset = sizeof(int) + sizeof(PageId); 
+    NonLeafEntry entry; 
+    entry.key = key;
+    entry.pid = pid;
+
+    int searchIndex = getKeyCount() - 1;
+    int indexFirst = sizeof(int) + sizeof(PageId);
+    int indexLast = indexFirst + (getKeyCount() * sizeof(NonLeafEntry));
+    int indexCur = indexLast;
+    bool pastMid = false; 
+    int midpoint = floor(getKeyCount() / 2);
+
+    NonLeafEntry valPrev;
+    memcpy(&valPrev, &buffer[indexLast - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
+
+    // Same spot-finding algorithm as insert()
+    while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
+        memmove(&buffer[indexCur], &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
+        if (searchIndex <= midpoint) {
+            pastMid = true;
+        }
+
+        // Update index and value to compare against, which moves us leftward
+        searchIndex -= 1;
+        indexCur = indexCur - sizeof(NonLeafEntry);
+        memcpy(&valPrev, &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));   
+    }
+
+    // Copy contents over to sibling node, which requires inserting
+    // everything from midpoint onward. 
+    NonLeafEntry copy;
+    for (int copyIndex = midpoint; copyIndex < indexLast; copyIndex += sizeof(NonLeafEntry)) {
+        // if it's the first key in the node, initialize the root
+        // TODO(CRYSTAL): make sure this works - im not sure how to get the pid of the original leafnode -- used endPid()
+        //
+        //
+        // need pid of the original leaf
+        //
+        //
+        //
+        //
+        memcpy(&copy, &buffer[copyIndex], sizeof(NonLeafEntry));
+        if (copyIndex == midpoint) {
+            sibling.initializeRoot(copy.pid, copy.key, copy.pid);
+        } else {
+            sibling.insert(copy.key, copy.pid);            
+        }
+    }
+
+    // Memset current node's latter half to 0, as those keys were moved
+    memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
+
+    // Insert into appropriate node 
+    if (pastMid) {
+        sibling.insert(entry.key, entry.pid);
+    }
+    else {
+        insert(entry.key, entry.pid);
+    }
+
+    // Set midKey - key in the middle after the split
+    NonLeafEntry result; 
+    memcpy(&result, &buffer[offset], sizeof(NonLeafEntry));
+    midKey = result.key;
+
+    return 0; 
+}
 
 /*
  * Given the searchKey, find the child-node pointer to follow and
@@ -471,7 +521,32 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
-{ return 0; }
+{
+    int offset = sizeof(int) + sizeof(PageId); 
+    NonLeafEntry entry; 
+    int searchPoint = offset; 
+
+    while (searchPoint < (getKeyCount() * sizeof(NonLeafEntry))) {
+        memcpy(&entry, &buffer[searchPoint], sizeof(NonLeafEntry));
+
+        if (entry.key == searchKey) {
+            pid = entry.pid;
+            return 0;
+        }
+
+        if (searchKey < entry.key) {
+            int left_pid; 
+            memcpy(&left_pid, &buffer[sizeof(int)], sizeof(PageId));
+            pid = left_pid;
+            return 0;
+        }
+
+        searchPoint += sizeof(NonLeafEntry);
+    }
+        
+    // TODO: Replace with binary search, if time permits
+    return RC_NO_SUCH_RECORD; 
+}
 
 /*
  * Initialize the root node with (pid1, key, pid2).
@@ -481,4 +556,21 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{ return 0; }
+{
+    
+    //in case this is called when the node already has keys
+    if(getKeyCount() > 0) {
+        return RC_INVALID_ATTRIBUTE;
+    }
+
+    int indexCur = sizeof(int);
+    NonLeafEntry newItem = { key, pid2 };
+    PageId first_pid = pid1;
+    memcpy(&buffer[indexCur], &first_pid, sizeof(PageId));
+    memcpy(&buffer[indexCur+sizeof(PageId)], &newItem, sizeof(NonLeafEntry));
+
+    // Don't forget to update the key count!
+    setKeyCount(1);
+
+    return 0;
+}
