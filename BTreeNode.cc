@@ -381,6 +381,13 @@ int BTNonLeafNode::getKeyCount()
     return numKeys;
 }
 
+RC BTNonLeafNode::setKeyCount(int numKeys)
+{
+    int numKeysCopy = numKeys;
+    memcpy(buffer, &numKeysCopy, sizeof(int));
+
+    return 0;
+}
 
 /*
  * Insert a (key, pid) pair to the node.

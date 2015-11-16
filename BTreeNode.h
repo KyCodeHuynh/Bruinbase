@@ -144,6 +144,10 @@ class BTLeafNode {
  */
 class BTNonLeafNode {
   public:
+    BTNonLeafNode()
+    {
+        memset(buffer, 0, PageFile::PAGE_SIZE);
+    }
    /**
     * Insert a (key, pid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -191,6 +195,12 @@ class BTNonLeafNode {
     * @return the number of keys in the node
     */
     int getKeyCount();
+
+    /**
+    * Set the number of keys stored in the node.
+    * @return 0 if successful. Return error code if there is an error.
+    */
+    RC setKeyCount(int numKeys);
 
    /**
     * Read the content of the node from the page pid in the PageFile pf.
