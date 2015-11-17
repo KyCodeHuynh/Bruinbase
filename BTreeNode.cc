@@ -544,10 +544,9 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 {
-    
-    //in case this is called when the node already has keys
-    if(getKeyCount() > 0) {
-        return RC_INVALID_ATTRIBUTE;
+    int bytesUsed = sizeof(int) + (getKeyCount() * sizeof(NonLeafEntry));   
+    if ((PageFile::PAGE_SIZE - bytesUsed) < 0) {
+        return RC_NODE_FULL;
     }
 
     int indexCur = sizeof(int);
@@ -557,7 +556,12 @@ RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
     memcpy(&buffer[indexCur+sizeof(PageId)], &newItem, sizeof(NonLeafEntry));
 
     // Don't forget to update the key count!
-    setKeyCount(1);
+    // Until we find out whether the root node is empty before initializing, I'll do a safe route:
+    if (getKeyCount() == 0) {
+        setKeyCount(1);
+    }
+    // if the count is greater than 1, that means there's already keys inside.. should I move them? 
+    // if I DO MOVE THEM: i would add 1 to the key count, re-insert that key into the node lol
 
     return 0;
 }

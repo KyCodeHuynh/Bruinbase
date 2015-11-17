@@ -7,6 +7,186 @@
 #include "PageFile.h"
 #include "BTreeNode.h"
 
+// print the current keys in a node - in order
+void printNode(BTNonLeafNode* node, PageFile* pagefile) {
+    typedef struct nonLeafEntry {
+        int key;
+        PageId pid;
+    } nonLeafEntry;    
+
+    int x = 0;
+
+   char buffer[1024];
+    // Need to read in PageFile's contents from our specific page
+    // AFTER we've updated it with the latest, or else we won't 
+    // be able to see the contents of the updated node
+    node->write(0, *pagefile);
+    pagefile->read(0, buffer);
+
+    PageId first_pageid;
+    memcpy(&first_pageid, &buffer[sizeof(int)], sizeof(PageId));
+    printf("first page id: %d\n", first_pageid);
+
+    nonLeafEntry inserted; 
+    int offset = sizeof(int) + sizeof(PageId);
+
+    while(x < node->getKeyCount()) {
+        memcpy(&inserted, &buffer[offset], sizeof(nonLeafEntry));
+        printf("key: %d\n", inserted.key);
+        printf("pid: %d\n", inserted.pid);
+        offset = offset + sizeof(nonLeafEntry);
+        x++;
+    }
+}
+
+void nonLeafNodeTest() {
+    /// TESTING FOR NON-LEAF FILE
+    PageFile nf("nonleaf-node-test.txt", 'w');
+    // for some reason, these get errors  ---------------------------------------------------------------------------------------------------------------------TODO
+    // assert(nf.getPageReadCount() == 0);
+    // assert(nf.getPageWriteCount() == 0);
+
+    // The leaf node itself, which has just zeroed-out
+    // internal buffer initially. 
+    BTNonLeafNode nonleafNode;
+
+    // Key count is initially zero, as is next sibling PageId
+    assert(nonleafNode.getKeyCount() == 0); 
+
+    // Debugging only
+    printf("End PageId: %d\n", nf.endPid());
+    printf("Return code: %d\n", nonleafNode.read(0, nf));
+
+    // Now we load the actual disk page, which requires
+    // us to write to the PageFile first, to set-up a page
+    char temp[1024];
+    memset(temp, 0, 1024);
+    nf.write(0, temp);
+
+    // Read should now succeed
+    assert(nonleafNode.read(0, nf) == 0);
+
+    // These should not have changed, as we wrote in all zeros
+    assert(nonleafNode.getKeyCount() == 0); 
+
+    // But this read with an invalid PageId should fail
+    assert(nonleafNode.read(-1, nf) == RC_INVALID_PID);
+
+    /// TESTING: initialize root
+    // idk if we are allowed to have other keys in there at that point, so ill check that. if we do-- we may need to shift everything right once
+
+    // Empty node - initialize root
+    int key1 = 10; 
+    PageId pid1 = 2;
+    PageId pid2 = 1;
+    assert(nonleafNode.initializeRoot(pid1, key1, pid2) == 0);
+
+    // This is the first inserted key, so it should 
+    // have been inserted right after the reserved buffer space
+    char buffer2[1024];
+    // Need to read in PageFile's contents from our specific page
+    // AFTER we've updated it with the latest, or else we won't 
+    // be able to see the contents of the updated node
+    nonleafNode.write(0, nf);
+    nf.read(0, buffer2);
+
+    // LeafEntry is private to BTLeafNode
+    typedef struct nonLeafEntry {
+        int key;
+        PageId pid;
+    } nonLeafEntry;
+
+    nonLeafEntry inserted2; 
+    int offset2 = sizeof(int) + sizeof(PageId);
+    PageId first_pageid;
+    memcpy(&first_pageid, &buffer2[sizeof(int)], sizeof(PageId));
+    memcpy(&inserted2, &buffer2[offset2], sizeof(nonLeafEntry));
+    assert(first_pageid == 2);
+    assert(inserted2.key == 10);
+    assert(inserted2.pid == 1); 
+
+    /// TESTING: insert
+
+    // This key should be inserted right after the previous one.
+    key1 = 15; 
+    pid1 = 3; 
+
+    // Compute before insertion, as this key is being added in
+    int insertPoint = offset2 + (nonleafNode.getKeyCount() * sizeof(nonLeafEntry));
+    assert(nonleafNode.insert(key1, pid1) == 0);
+    nonleafNode.write(0, nf);
+    nf.read(0, buffer2);
+    memcpy(&inserted2, &buffer2[insertPoint], sizeof(nonLeafEntry));
+    assert(inserted2.key == 15);
+    assert(inserted2.pid == 3);
+
+    // // This key should go between the previous two: 10, 12, 15
+    key1 = 12; 
+    pid1 = 4; 
+    insertPoint = offset2 + (sizeof(nonLeafEntry));
+    assert(nonleafNode.insert(key1, pid1) == 0);
+    nonleafNode.write(0, nf);
+    nf.read(0, buffer2);
+    memcpy(&inserted2, &buffer2[insertPoint], sizeof(nonLeafEntry));
+    // printf("Key at second entry: %d\n", inserted.key);
+    assert(inserted2.key == 12);
+    assert(inserted2.pid == 4);
+
+    // sanity check 
+    printNode(&nonleafNode, &nf);
+
+    printf("I'm going to re-initialize the node and see what happens\n");
+    printf("NEW ANSWER:\n");
+
+    pid1 = 55;
+    pid2 = 12;
+    key1 = 5;
+
+    assert(nonleafNode.initializeRoot(pid1, key1, pid2) == 0);
+
+    printNode(&nonleafNode, &nf);
+
+
+    // // This negative key should go first: -1, 10, 12, 15
+    // key = -1; 
+    // rid.pid = 5; 
+    // rid.sid = 6;
+    // insertPoint = offset;
+    // assert(leafNode.insert(key, rid) == 0);
+    // leafNode.write(0, pf);
+    // pf.read(0, buffer);
+    // memcpy(&inserted, &buffer[insertPoint], sizeof(LeafEntry));
+    // // printf("Key at second entry: %d\n", inserted.key);
+    // assert(inserted.key == -1);
+    // assert(inserted.rid.pid == 5);
+    // assert(inserted.rid.sid == 6);
+
+    // // Need to be able to insert at least 70 keys
+    // // We've inserted 4 so far, so let's insert 67 more for 71 total
+    // assert(leafNode.getKeyCount() == 4);
+    // int manyKey = 42;
+    // RecordId manyRID; 
+    // manyRID.pid = 6; 
+    // manyRID.sid = 7;
+    // int manyInsertPoint = 0;
+    // LeafEntry manyInserted;
+    // for (int i = 0; i < 67; i++) {
+    //     manyInsertPoint = offset + (leafNode.getKeyCount() * sizeof(LeafEntry));
+    //     assert(leafNode.insert(manyKey, manyRID) == 0);
+    //     // Update PageFile with latest node contents
+    //     leafNode.write(0, pf);
+    //     pf.read(0, buffer);
+
+    //     // Check inserted key
+    //     memcpy(&manyInserted, &buffer[manyInsertPoint], sizeof(LeafEntry));
+    //     assert(manyInserted.key == manyKey);
+    //     manyKey++;
+    //     manyRID.pid++;
+    //     manyRID.sid++;
+    // }
+    // assert(leafNode.getKeyCount() == 71);
+}
+
 int main() 
 {
     /// TESTING: Initial BTLeafNode state and getter/setter functions
@@ -229,6 +409,11 @@ int main()
     
 
 
+/////////////////////////////////// TESTING NON LEAF NODE ////////////////////////////////////////////////////////////////////////////////////////
+    // TESTING: Initial BTNonLeafNode state and getter/setter functions
+    // Create PageFile that will store a non leaf node
+
+    nonLeafNodeTest();
     pf.close();
     return 0;
 }
