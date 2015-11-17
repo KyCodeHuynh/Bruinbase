@@ -9,6 +9,7 @@
 
 int main() 
 {
+    /// TESTING: Initial BTLeafNode state and getter/setter functions
     // Create PageFile that will store a leaf node
     PageFile pf("node-test.txt", 'w');
     assert(pf.getPageReadCount() == 0);
@@ -138,28 +139,59 @@ int main()
     for (int i = 0; i < 67; i++) {
         manyInsertPoint = offset + (leafNode.getKeyCount() * sizeof(LeafEntry));
         assert(leafNode.insert(manyKey, manyRID) == 0);
+        // Update PageFile with latest node contents
         leafNode.write(0, pf);
         pf.read(0, buffer);
+
+        // Check inserted key
         memcpy(&manyInserted, &buffer[manyInsertPoint], sizeof(LeafEntry));
+        assert(manyInserted.key == manyKey);
+        manyKey++;
+        manyRID.pid++;
+        manyRID.sid++;
     }
     assert(leafNode.getKeyCount() == 71);
 
+
     /// TESTING: locate()
 
-    // We should now have: -1, 10, 12, 15, 42, 43, .., 109
-    // int eid = -1; 
-    // int searchKey = -1;
-    // assert(leafNode.locate(searchKey, eid) == 0);
-    // assert(eid == 0);
+    // We should now have: -1, 10, 12, 15, 42, 43, .., 108
+    int eid = -1; 
+    int searchKey = -1;
+    assert(leafNode.locate(searchKey, eid) == 0);
+    assert(eid == 0);
 
-    // eid = -1; 
-    // searchKey = 10; 
-    // assert(leafNode.locate(searchKey, eid) == 0):
-    // assert(eid == 1); 
+    eid = -1; 
+    searchKey = 10; 
+    assert(leafNode.locate(searchKey, eid) == 0);
+    assert(eid == 1); 
 
-    // // Does not exist
-    // eid = -1; 
-    // searchKey = 13
+    // Does not exist
+    eid = -1; 
+    searchKey = 13; 
+    assert(leafNode.locate(searchKey, eid) == RC_NO_SUCH_RECORD);
+    assert(eid == 3);
+
+    eid = 1; 
+    searchKey = 42; 
+    assert(leafNode.locate(searchKey, eid) == 0); 
+    assert(eid == 4);
+
+    // Index of last entry should be getKeyCount() - 1
+    eid = -1; 
+    searchKey = 108; 
+    leafNode.locate(searchKey, eid);
+    // printf("eid: %d\n", eid);
+    assert(leafNode.locate(searchKey, eid) == 0);
+    assert(eid == leafNode.getKeyCount() - 1);
+    assert(eid == 70);
+
+    // And finally, the second-to-last entry
+    eid = -1; 
+    searchKey = 107; 
+    leafNode.locate(searchKey, eid);
+    assert(leafNode.locate(searchKey, eid) == 0);
+    assert(eid == 69);
 
 
     /// TESTING: readEntry()

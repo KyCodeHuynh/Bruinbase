@@ -243,8 +243,6 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     // Return its index within the node in the 'eid' parameter
     int offset = sizeof(int) + sizeof(PageId); 
     LeafEntry entry; 
-   
-
     int searchPoint = offset; 
     int searchIndex = 0;
 
@@ -263,7 +261,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
         // Set eid to the index of the first node with key >= searchKey
         // Example: 1 3 5 7 8
         // locate() with searchKey of 3 = 1
-        // locate() with searchKey of
+        // locate() with searchKey of 4 = 2
         if (searchKey < entry.key) {
             eid = searchIndex;
             return RC_NO_SUCH_RECORD;
@@ -274,7 +272,9 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     }
         
 
-    // TODO: Replace with binary search, if time permits
+    // Hit end of node without finding searchKey
+    // Set eid to index of highest item
+    eid = getKeyCount() -1; 
     return RC_NO_SUCH_RECORD; 
 }
 
