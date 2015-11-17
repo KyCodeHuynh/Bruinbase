@@ -477,21 +477,8 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
     // everything from midpoint onward. 
     NonLeafEntry copy;
     for (int copyIndex = midpoint; copyIndex < indexLast; copyIndex += sizeof(NonLeafEntry)) {
-        // if it's the first key in the node, initialize the root
-        // TODO(CRYSTAL): make sure this works - im not sure how to get the pid of the original leafnode -- used endPid()
-        //
-        //
-        // need pid of the original leaf
-        //
-        //
-        //
-        //
         memcpy(&copy, &buffer[copyIndex], sizeof(NonLeafEntry));
-        if (copyIndex == midpoint) {
-            sibling.initializeRoot(copy.pid, copy.key, copy.pid);
-        } else {
-            sibling.insert(copy.key, copy.pid);            
-        }
+        sibling.insert(copy.key, copy.pid);            
     }
 
     // Memset current node's latter half to 0, as those keys were moved
