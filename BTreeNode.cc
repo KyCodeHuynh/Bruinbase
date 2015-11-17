@@ -513,7 +513,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
     NonLeafEntry entry; 
     int searchPoint = offset; 
 
-    while (searchPoint < (getKeyCount() * sizeof(NonLeafEntry))) {
+    while (searchPoint <= (getKeyCount() * sizeof(NonLeafEntry))) {
         memcpy(&entry, &buffer[searchPoint], sizeof(NonLeafEntry));
 
         if (entry.key == searchKey) {
@@ -549,15 +549,23 @@ RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
         return RC_NODE_FULL;
     }
 
-    int indexCur = sizeof(int);
+    NonLeafEntry old;
+
+    if (getKeyCount() != 0) {
+        memcpy(&old, &buffer[sizeof(int)+sizeof(PageId)], sizeof(NonLeafEntry));
+    }
+
     NonLeafEntry newItem = { key, pid2 };
     PageId first_pid = pid1;
-    memcpy(&buffer[indexCur], &first_pid, sizeof(PageId));
-    memcpy(&buffer[indexCur+sizeof(PageId)], &newItem, sizeof(NonLeafEntry));
+    memcpy(&buffer[sizeof(int)], &first_pid, sizeof(PageId));
+    memcpy(&buffer[sizeof(int)+sizeof(PageId)], &newItem, sizeof(NonLeafEntry));
 
     // Don't forget to update the key count!
     // Until we find out whether the root node is empty before initializing, I'll do a safe route:
-    if (getKeyCount() == 0) {
+    if (getKeyCount() != 0) {
+        // insert adjusts the key count
+        insert(old.key, old.pid);
+    } else {
         setKeyCount(1);
     }
     // if the count is greater than 1, that means there's already keys inside.. should I move them? 

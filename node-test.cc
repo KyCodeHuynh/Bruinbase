@@ -145,46 +145,81 @@ void nonLeafNodeTest() {
     assert(nonleafNode.initializeRoot(pid1, key1, pid2) == 0);
 
     printNode(&nonleafNode, &nf);
-
+    printf("Adding -1 to the combo:\n\n");
 
     // // This negative key should go first: -1, 10, 12, 15
-    // key = -1; 
-    // rid.pid = 5; 
-    // rid.sid = 6;
-    // insertPoint = offset;
-    // assert(leafNode.insert(key, rid) == 0);
-    // leafNode.write(0, pf);
-    // pf.read(0, buffer);
-    // memcpy(&inserted, &buffer[insertPoint], sizeof(LeafEntry));
-    // // printf("Key at second entry: %d\n", inserted.key);
-    // assert(inserted.key == -1);
-    // assert(inserted.rid.pid == 5);
-    // assert(inserted.rid.sid == 6);
+    key1 = -1; 
+    pid1 = 5; 
+    insertPoint = offset2;
+    assert(nonleafNode.insert(key1, pid1) == 0);
+    nonleafNode.write(0, nf);
+    nf.read(0, buffer2);
+    memcpy(&inserted2, &buffer2[insertPoint], sizeof(nonLeafEntry));
+    // printf("Key at second entry: %d\n", inserted.key);
+    assert(inserted2.key == -1);
+    assert(inserted2.pid == 5);
 
-    // // Need to be able to insert at least 70 keys
-    // // We've inserted 4 so far, so let's insert 67 more for 71 total
-    // assert(leafNode.getKeyCount() == 4);
-    // int manyKey = 42;
-    // RecordId manyRID; 
-    // manyRID.pid = 6; 
-    // manyRID.sid = 7;
-    // int manyInsertPoint = 0;
-    // LeafEntry manyInserted;
-    // for (int i = 0; i < 67; i++) {
-    //     manyInsertPoint = offset + (leafNode.getKeyCount() * sizeof(LeafEntry));
-    //     assert(leafNode.insert(manyKey, manyRID) == 0);
-    //     // Update PageFile with latest node contents
-    //     leafNode.write(0, pf);
-    //     pf.read(0, buffer);
+    printNode(&nonleafNode, &nf);
+    printf("key count: %d\n", nonleafNode.getKeyCount());
 
-    //     // Check inserted key
-    //     memcpy(&manyInserted, &buffer[manyInsertPoint], sizeof(LeafEntry));
-    //     assert(manyInserted.key == manyKey);
-    //     manyKey++;
-    //     manyRID.pid++;
-    //     manyRID.sid++;
-    // }
-    // assert(leafNode.getKeyCount() == 71);
+    // Need to be able to insert at least 70 keys
+    // We've inserted 5 so far, so let's insert 66 more for 71 total
+    assert(nonleafNode.getKeyCount() == 5);
+    int manyKey = 42;
+    PageId manyPID; 
+    manyPID = 20; 
+    int manyInsertPoint = 0;
+    nonLeafEntry manyInserted;
+    for (int i = 0; i < 66; i++) {
+        manyInsertPoint = offset2 + (nonleafNode.getKeyCount() * sizeof(nonLeafEntry));
+        assert(nonleafNode.insert(manyKey, manyPID) == 0);
+        // Update PageFile with latest node contents
+        nonleafNode.write(0, nf);
+        nf.read(0, buffer2);
+
+        // Check inserted key
+        memcpy(&manyInserted, &buffer2[manyInsertPoint], sizeof(nonLeafEntry));
+        assert(manyInserted.key == manyKey);
+        manyKey++;
+        manyPID++;
+    }
+    // assert(nonleafNode.getKeyCount() == 71);
+    printf("All 71 nodes have been inserted! \n");
+    // printNode(&nonleafNode, &nf);
+    printf("key count: %d\n", nonleafNode.getKeyCount());
+
+
+
+    /// TESTING: locate()
+
+    // We should now have: -1, 10, 12, 15, 42, 43, .., 107
+    int pid = -1; 
+    int searchKey = -1;
+    assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
+    assert(pid == 5);
+
+    pid = -1; 
+    searchKey = 5;
+    assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
+    assert(pid == 12);
+
+    // Does not exist
+    pid = -1; 
+    searchKey = 109;
+    assert(nonleafNode.locateChildPtr(searchKey, pid) == RC_NO_SUCH_RECORD);
+
+    pid = -1; 
+    searchKey = 106;
+    int count = nonleafNode.getKeyCount();
+
+    assert(nonleafNode.locateChildPtr(107, pid) == 0);
+    assert(pid == 85);
+
+    printf("the pid is: %d\n", pid);
+    printf("the key count is: %d\n", count);
+
+    // need to test insertAndSplit !! 
+
 }
 
 int main() 
