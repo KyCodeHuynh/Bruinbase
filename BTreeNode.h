@@ -113,6 +113,7 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+    // TODO: Somehow mark this as a leaf node
     struct LeafEntry {
         int key; 
         RecordId rid;

@@ -196,6 +196,33 @@ int main()
 
     /// TESTING: readEntry()
 
+    // Reset to test what readEntry() gives back to us
+    RecordId result;
+    result.pid = -1; 
+    result.sid = -1;
+    searchKey = -1; 
+    // Unchanged from above
+    eid = 69; 
+    assert(leafNode.readEntry(eid, searchKey, result) == 0);
+    assert(searchKey == 107);
+    assert(result.pid == 71);
+    assert(result.sid == 72);
+
+    result.pid = -1; 
+    result.sid = -1; 
+    searchKey = -1;
+    eid = 0;
+    assert(leafNode.readEntry(eid, searchKey, result) == 0);
+    assert(searchKey == -1); 
+    assert(result.pid == 5); 
+    assert(result.sid == 6); 
+
+    // Invalid index should give back RC_NO_SUCH_RECORD
+    eid = -1; 
+    assert(leafNode.readEntry(eid, searchKey, result) == RC_NO_SUCH_RECORD);
+
+    eid = leafNode.getKeyCount();
+    assert(leafNode.readEntry(eid, searchKey, result) == RC_NO_SUCH_RECORD);
 
 
     /// TESTING: insertAndSplit()
