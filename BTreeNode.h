@@ -25,6 +25,15 @@ class BTLeafNode {
     {
         memset(buffer, 0, PageFile::PAGE_SIZE);
     }
+
+    /** 
+     * Is this a leaf node? Yes. 
+     */
+     bool isLeaf() 
+     {
+        return true;
+     }
+
    /**
     * Insert the (key, rid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -149,6 +158,15 @@ class BTNonLeafNode {
     {
         memset(buffer, 0, PageFile::PAGE_SIZE);
     }
+
+    /** 
+     * Is this a leaf node? No. 
+     */
+     bool isLeaf() 
+     {
+        return false;
+     }
+
    /**
     * Insert a (key, pid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
