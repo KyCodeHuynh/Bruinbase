@@ -172,11 +172,12 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     entry.rid = rid;
 
     int searchIndex = getKeyCount() - 1;
+    int midpoint = floor(getKeyCount() / 2);
+    bool pastMid = false; 
+
     int indexFirst = sizeof(int) + sizeof(PageId);
     int indexLast = indexFirst + (getKeyCount() * sizeof(LeafEntry));
     int indexCur = indexLast;
-    bool pastMid = false; 
-    int midpoint = floor(getKeyCount() / 2);
 
     // If we go past the midpoint while looking for our
     // insertion spot, then we'll insert into the sibling node, 
@@ -185,9 +186,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     LeafEntry valPrev;
     memcpy(&valPrev, &buffer[indexLast - sizeof(LeafEntry)], sizeof(LeafEntry));
 
-    // Same spot-finding algorithm as insert()
+    // Same spot-finding algorithm as insert(), but without actually moving items
     while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
-        memmove(&buffer[indexCur], &buffer[indexCur - sizeof(LeafEntry)], sizeof(LeafEntry));
         if (searchIndex <= midpoint) {
             pastMid = true;
         }
@@ -209,7 +209,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     // Memset current node's latter half to 0, as those keys were moved
     memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
 
-    // Insert into appropriate node 
+    // Insert our argument (key, RecordId) pair into the appropriate node 
     if (pastMid) {
         sibling.insert(entry.key, entry.rid);
     }
@@ -236,10 +236,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
                    behind the largest key smaller than searchKey.
  * @return 0 if searchKey is found. Otherwise return an error code.
  */
- // TODO: Unit-test!
 RC BTLeafNode::locate(int searchKey, int& eid)
 { 
-    // TODO: Linear search of entries for matching key
+    // Linear search of entries for matching key
     // Return its index within the node in the 'eid' parameter
     int offset = sizeof(int) + sizeof(PageId); 
     LeafEntry entry; 
@@ -286,10 +285,9 @@ RC BTLeafNode::locate(int searchKey, int& eid)
  * @param rid[OUT] the RecordId from the entry
  * @return 0 if successful. Return an error code if there is an error.
  */
- // TODO: Unit-test!
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 { 
-    // TODO: Given an entry index number, read out its 
+    // Given an entry index number, read out its 
     // (key, RecordID) pair from this node
 
     // Negative or overly large entry index? 
@@ -531,7 +529,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
         searchPoint += sizeof(NonLeafEntry);
     }
         
-    // TODO: Replace with binary search, if time permits
+    // Replace with binary search, if time permits
     return RC_NO_SUCH_RECORD; 
 }
 

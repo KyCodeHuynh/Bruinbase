@@ -441,6 +441,16 @@ int main()
 
 
     /// TESTING: insertAndSplit()
+    BTLeafNode sibling;
+    RecordId insert;
+    insert.pid = 1;
+    insert.sid = 2;
+    int siblingKey = -1; 
+
+    // Sibling should get half of the keys, with 109 being its last
+    leafNode.insertAndSplit(11, insert, sibling, siblingKey);
+    printf("Sibling key count: %d\n", sibling.getKeyCount());
+    printf("Sibling's first key: %d\n", siblingKey);
     
 
 
