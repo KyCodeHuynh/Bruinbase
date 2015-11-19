@@ -39,6 +39,39 @@ void printNode(BTNonLeafNode* node, PageFile* pagefile) {
     }
 }
 
+// print the current keys in a node - in order
+void printLeafNode(BTLeafNode* node, PageFile* pagefile) {
+    typedef struct LeafEntry {
+        int key;
+        RecordId rid;
+    } LeafEntry;    
+
+    int x = 0;
+
+    char buffer[1024];
+    // Need to read in PageFile's contents from our specific page
+    // AFTER we've updated it with the latest, or else we won't 
+    // be able to see the contents of the updated node
+    node->write(0, *pagefile);
+    pagefile->read(0, buffer);
+
+    PageId next_pageid;
+    memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
+    printf("next page id: %d\n", next_pageid);
+
+    LeafEntry inserted; 
+    int offset = sizeof(int) + sizeof(PageId);
+
+    while(x < node->getKeyCount()) {
+        memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
+        printf("key: %d\n", inserted.key);
+        printf("pid: %d\n", inserted.rid.pid);
+        printf("sid: %d\n", inserted.rid.sid);
+        offset = offset + sizeof(LeafEntry);
+        x++;
+    }
+}
+
 void nonLeafNodeTest() {
     /// TESTING FOR NON-LEAF FILE
     PageFile nf("nonleaf-node-test.txt", 'w');
@@ -447,10 +480,31 @@ int main()
     insert.sid = 2;
     int siblingKey = -1; 
 
+    printf("Original Node:\n");
+    printf("original key count: %d\n", leafNode.getKeyCount());
+    printLeafNode(&leafNode, &pf);
+
+    printf("Sibling Node:\n");
+    printf("Sibling key count: %d\n", sibling.getKeyCount());
+    printLeafNode(&sibling, &pf);
+
     // Sibling should get half of the keys, with 109 being its last
     leafNode.insertAndSplit(11, insert, sibling, siblingKey);
-    printf("Sibling key count: %d\n", sibling.getKeyCount());
-    printf("Sibling's first key: %d\n", siblingKey);
+
+
+    printf("CHANGED Original Node:\n");
+    printf("changed original key count: %d\n", leafNode.getKeyCount());
+    printLeafNode(&leafNode, &pf);
+
+    
+    printf("CHANGED Sibling Node:\n");
+    printf("changed sibling key count: %d\n", sibling.getKeyCount());
+    printLeafNode(&sibling, &pf);
+
+    printf("Sibling key is: %d\n", siblingKey);
+
+    // printf("Sibling key count: %d\n", sibling.getKeyCount());
+    // printf("Sibling's first key: %d\n", siblingKey);
     
 
 
@@ -458,7 +512,7 @@ int main()
     // TESTING: Initial BTNonLeafNode state and getter/setter functions
     // Create PageFile that will store a non leaf node
 
-    nonLeafNodeTest();
+    // nonLeafNodeTest();
     pf.close();
     return 0;
 }

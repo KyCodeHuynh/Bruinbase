@@ -1,3 +1,7 @@
+#include <cassert> 
+#include <cstdio>
+#include <cstring>
+
 #include <cmath>
 #include "BTreeNode.h"
 
@@ -201,20 +205,34 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     // Copy contents over to sibling node, which requires inserting
     // everything from midpoint onward. 
     LeafEntry copy;
-    for (int copyIndex = midpoint; copyIndex < indexLast; copyIndex += sizeof(LeafEntry)) {
+    int count = 0;
+
+    printf("MY MIDPOINT IS: %d", midpoint);
+
+    for (int copyIndex = offset + midpoint*sizeof(LeafEntry); copyIndex < indexLast; copyIndex += sizeof(LeafEntry)) {
         memcpy(&copy, &buffer[copyIndex], sizeof(LeafEntry));
         sibling.insert(copy.key, copy.rid);
+        count++;
     }
 
     // Memset current node's latter half to 0, as those keys were moved
-    memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
+    // memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
+    
+    //set the key count of the original node
+    setKeyCount(getKeyCount()-count);
+
+    //set the key count of the new node
+    // setKeyCount(count);    
+
 
     // Insert our argument (key, RecordId) pair into the appropriate node 
     if (pastMid) {
-        sibling.insert(entry.key, entry.rid);
+        printf("insert into sibling");
+        insert(entry.key, entry.rid);
     }
     else {
-        insert(entry.key, entry.rid);
+        printf("insert into original");
+        sibling.insert(entry.key, entry.rid);
     }
 
     // Set siblingKey to be the first key after everything
