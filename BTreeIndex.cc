@@ -130,5 +130,25 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
 	// TODO: I'm not quite sure how to set up the buffer for this
 	// pf.read(cursor.pid, void *buffer);
+
+    // Assuming this is a leaf node, so we have a RecordId
+    // Use readEntry(), then update cursor.eid += 1
+
+    // Spin up a new leaf node with the pointed-to contents
+    BTLeafNode leaf;
+    int rc = leaf.read(cursor.pid, pf);
+    if (rc < 0) {
+        return rc;
+    }
+
+    // Get the wanted contents. 
+    rc = leaf.readEntry(cursor.eid, key, rid);
+    if (rc < 0) {
+        return rc;
+    }
+
+    // Update the IndexCursor
+    cursor.eid += 1;
+    
     return 0;
 }
