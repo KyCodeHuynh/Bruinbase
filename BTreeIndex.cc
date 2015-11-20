@@ -12,9 +12,6 @@
 
 using namespace std;
 
-int PAGE_ID_MAX = 5;
-int KEY_COUNT_MAX = 4;
-
 /*
  * BTreeIndex constructor
  */
@@ -102,10 +99,47 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
+	int found_eid = -1;
+
 	// If it's empty, return RC_NO_SUCH_RECORD
+	if (treeHeight == 0) {
+		return RC_NO_SUCH_RECORD;
+	}
+
+	// If it's height is 1, then the key MUST be in the root node
+	if (treeHeight == 1) {
+		// TODO -- CHECK THIS -------------------------------------------------ahhhhhhh
+		// Assuming that our only node is a LEAF node
+		BTLeafNode only_node;
+		int rc = only_node.read(rootPid, pf);
+		if (rc < 0) {
+			return rc;
+		}
 
 
-	// If it's NOT empty -- start at the root node
+		// look for the searchKey
+		rc = only_node.locate(searchKey, found_eid);
+		if(rc < 0) {
+			return rc;
+		}
+
+		// set the cursor and exit
+		cursor.eid = found_eid;
+		return 0;
+	}
+
+	// If it's NOT empty -- start at the root node, track each level you go down
+	if (treeHeight > 1) {
+		for (int i = treeHeight; i >= 1; i++) {
+			// If you've reached the leaf level
+			if (i == 1) {
+				BTLeafNode leafnode;
+				// This should actually be VERY VERY similar to the "treeHeight == 1" case.
+				// You may be able to combine them in a recursive manner, with treeHeight ==1
+				// as the base case. COMING SOON	
+			}
+		}
+
 		// if you're at a non-leaf node
 		// use locateAtChildPtr() to get the key,pid
 		// follow the pid to the next node - do the same thing
@@ -113,7 +147,8 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 		// if you're at a leaf node
 		// use locate() to get the key, pid, rid match
 			// if you find the right one, set IndexCursor.pid = PageId and IndexCursor.eid = searchKey index entry #
-			// if you DON'T find the right one, set IndexCursor = PageId of leaf node and eid = read description..?
+			// if you DON'T find the right one, set IndexCursor = PageId of leaf node and eid = read description..?		
+	}
 
     return 0;
 }
@@ -128,8 +163,6 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-	// TODO: I'm not quite sure how to set up the buffer for this
-	// pf.read(cursor.pid, void *buffer);
 
     // Assuming this is a leaf node, so we have a RecordId
     // Use readEntry(), then update cursor.eid += 1
