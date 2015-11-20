@@ -72,12 +72,8 @@ void printLeafNode(BTLeafNode* node, PageFile* pagefile) {
     }
 }
 
-void nonLeafNodeTest() {
+void nonLeafNodeTest(PageFile nf) {
     /// TESTING FOR NON-LEAF FILE
-    PageFile nf("nonleaf-node-test.txt", 'w');
-    // for some reason, these get errors  ---------------------------------------------------------------------------------------------------------------------TODO
-    // assert(nf.getPageReadCount() == 0);
-    // assert(nf.getPageWriteCount() == 0);
 
     // The leaf node itself, which has just zeroed-out
     // internal buffer initially. 
@@ -221,10 +217,6 @@ void nonLeafNodeTest() {
     // printNode(&nonleafNode, &nf);
     printf("key count: %d\n", nonleafNode.getKeyCount());
 
-
-
-    /// TESTING: locate()
-
     // We should now have: -1, 10, 12, 15, 42, 43, .., 107
     int pid = -1; 
     int searchKey = -1;
@@ -248,10 +240,47 @@ void nonLeafNodeTest() {
     assert(nonleafNode.locateChildPtr(107, pid) == 0);
     assert(pid == 85);
 
-    printf("the pid is: %d\n", pid);
-    printf("the key count is: %d\n", count);
+    // printf("the pid is: %d\n", pid);
+    // printf("the key count is: %d\n", count);
 
-    // need to test insertAndSplit !! 
+
+    /// TESTING: insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey) 
+    BTNonLeafNode sibling;
+    PageId insert = 1;
+    int siblingKey = -1; 
+    nonleafNode.setKeyCount(6);
+
+    printf("Original Node:\n");
+    printf("original key count: %d\n", nonleafNode.getKeyCount());
+    printNode(&nonleafNode, &nf);
+
+    printf("Sibling Node:\n");
+    printf("Sibling key count: %d\n", sibling.getKeyCount());
+    printNode(&sibling, &nf);
+
+    // Sibling should get half of the keys, with 109 being its last
+    nonleafNode.insertAndSplit(4, insert, sibling, siblingKey);
+
+
+    printf("CHANGED Original Node:\n");
+    printf("changed original key count: %d\n", nonleafNode.getKeyCount());
+    printNode(&nonleafNode, &nf);
+    // assert(leafNode.getKeyCount() == 36);
+
+    printf("CHANGED Sibling Node:\n");
+    printf("changed sibling key count: %d\n", sibling.getKeyCount());
+    printNode(&sibling, &nf);
+    printf("Sibling key is: %d\n", siblingKey);
+    // assert(sibling.getKeyCount() == 36);
+    // assert(siblingKey == 73);
+
+    // printf("Sibling key count: %d\n", sibling.getKeyCount());
+    // printf("Sibling's first key: %d\n", siblingKey);
+
+
+
+    /// TESTING: locateChildPtr()
+
 
 }
 
@@ -262,6 +291,11 @@ int main()
     PageFile pf("node-test.txt", 'w');
     assert(pf.getPageReadCount() == 0);
     assert(pf.getPageWriteCount() == 0);
+
+    PageFile nf("nonleaf-node-test.txt", 'w');
+    // for some reason, these get errors  ---------------------------------------------------------------------------------------------------------------------TODO
+    assert(nf.getPageReadCount() == 0);
+    assert(nf.getPageWriteCount() == 0);
     // assert(pf.endPid() == 0); 
 
     // The leaf node itself, which has just zeroed-out
@@ -512,7 +546,7 @@ int main()
     // TESTING: Initial BTNonLeafNode state and getter/setter functions
     // Create PageFile that will store a non leaf node
 
-    // nonLeafNodeTest();
+    nonLeafNodeTest(nf);
     pf.close();
     return 0;
 }
