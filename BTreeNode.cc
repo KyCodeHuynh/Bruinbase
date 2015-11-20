@@ -207,8 +207,6 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     LeafEntry copy;
     int count = 0;
 
-    printf("MY MIDPOINT IS: %d", midpoint);
-
     for (int copyIndex = offset + midpoint*sizeof(LeafEntry); copyIndex < indexLast; copyIndex += sizeof(LeafEntry)) {
         memcpy(&copy, &buffer[copyIndex], sizeof(LeafEntry));
         sibling.insert(copy.key, copy.rid);
@@ -227,11 +225,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 
     // Insert our argument (key, RecordId) pair into the appropriate node 
     if (pastMid) {
-        printf("insert into sibling");
         insert(entry.key, entry.rid);
     }
     else {
-        printf("insert into original");
         sibling.insert(entry.key, entry.rid);
     }
 
@@ -492,20 +488,24 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
     // Copy contents over to sibling node, which requires inserting
     // everything from midpoint onward. 
     NonLeafEntry copy;
-    for (int copyIndex = midpoint; copyIndex < indexLast; copyIndex += sizeof(NonLeafEntry)) {
+    int count = 0;
+
+    for (int copyIndex = offset + midpoint*sizeof(NonLeafEntry); copyIndex < indexLast; copyIndex += sizeof(NonLeafEntry)) {
         memcpy(&copy, &buffer[copyIndex], sizeof(NonLeafEntry));
-        sibling.insert(copy.key, copy.pid);            
+        sibling.insert(copy.key, copy.pid);           
+        count++; 
     }
 
     // Memset current node's latter half to 0, as those keys were moved
-    memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
+    // memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
+    setKeyCount(getKeyCount()-count);
 
     // Insert into appropriate node 
     if (pastMid) {
-        sibling.insert(entry.key, entry.pid);
+        insert(entry.key, entry.pid);
     }
     else {
-        insert(entry.key, entry.pid);
+        sibling.insert(entry.key, entry.pid);
     }
 
     // Set midKey - key in the middle after the split

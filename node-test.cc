@@ -480,33 +480,33 @@ int main()
     insert.sid = 2;
     int siblingKey = -1; 
 
-    printf("Original Node:\n");
-    printf("original key count: %d\n", leafNode.getKeyCount());
-    printLeafNode(&leafNode, &pf);
+    // printf("Original Node:\n");
+    // printf("original key count: %d\n", leafNode.getKeyCount());
+    // printLeafNode(&leafNode, &pf);
 
-    printf("Sibling Node:\n");
-    printf("Sibling key count: %d\n", sibling.getKeyCount());
-    printLeafNode(&sibling, &pf);
+    // printf("Sibling Node:\n");
+    // printf("Sibling key count: %d\n", sibling.getKeyCount());
+    // printLeafNode(&sibling, &pf);
 
     // Sibling should get half of the keys, with 109 being its last
     leafNode.insertAndSplit(11, insert, sibling, siblingKey);
 
 
-    printf("CHANGED Original Node:\n");
-    printf("changed original key count: %d\n", leafNode.getKeyCount());
-    printLeafNode(&leafNode, &pf);
+    // printf("CHANGED Original Node:\n");
+    // printf("changed original key count: %d\n", leafNode.getKeyCount());
+    // printLeafNode(&leafNode, &pf);
+    assert(leafNode.getKeyCount() == 36);
 
-    
-    printf("CHANGED Sibling Node:\n");
-    printf("changed sibling key count: %d\n", sibling.getKeyCount());
-    printLeafNode(&sibling, &pf);
-
-    printf("Sibling key is: %d\n", siblingKey);
+    // printf("CHANGED Sibling Node:\n");
+    // printf("changed sibling key count: %d\n", sibling.getKeyCount());
+    // printLeafNode(&sibling, &pf);
+    // printf("Sibling key is: %d\n", siblingKey);
+    assert(sibling.getKeyCount() == 36);
+    assert(siblingKey == 73);
 
     // printf("Sibling key count: %d\n", sibling.getKeyCount());
     // printf("Sibling's first key: %d\n", siblingKey);
     
-
 
 /////////////////////////////////// TESTING NON LEAF NODE ////////////////////////////////////////////////////////////////////////////////////////
     // TESTING: Initial BTNonLeafNode state and getter/setter functions
