@@ -12,12 +12,18 @@
 
 using namespace std;
 
+int PAGE_ID_MAX = 5;
+int KEY_COUNT_MAX = 4;
+
 /*
  * BTreeIndex constructor
  */
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
+
+    // Initialize tree height at 0 - there's no nodes
+    treeHeight = 0;
 }
 
 /*
@@ -29,7 +35,10 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {
-    return 0;
+	// Open the index file
+	// Using the PageFile documentation for open()
+	// Will create an index file if it does not exist, and will return proper error codes
+    return pf.open(indexname, mode);
 }
 
 /*
@@ -38,7 +47,10 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    return 0;
+	// Close the index file
+	// Using the PageFile documentation for close()
+	// Will create an index file if it does not exist, and will return proper error codes
+    return pf.close();
 }
 
 /*
@@ -49,6 +61,24 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
+	// Check if it's empty
+	// If so, put the first key in a leaf node!
+	// I'm considering having an initialized root node, with it pointing to 1-key leaf node
+
+	// Check if you're in a leaf node
+	// If you are, you're going to try to insert your key + rid !
+	// But you should first check if it will cause overflow.. cuz then u will need to do overflow+split
+
+		// leaf overflow
+		// if the parent of this is ALSO full.. need to do overflow again
+
+
+	// Check if you're in a non-leaf node
+	// you got to search where it has to go
+
+		// non-leaf overflow -- involves insertAndSplit
+		// if the parent is ALSO full, overflow again.. recursion
+
     return 0;
 }
 
@@ -72,12 +102,25 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
+	// If it's empty, return RC_NO_SUCH_RECORD
+
+
+	// If it's NOT empty -- start at the root node
+		// if you're at a non-leaf node
+		// use locateAtChildPtr() to get the key,pid
+		// follow the pid to the next node - do the same thing
+
+		// if you're at a leaf node
+		// use locate() to get the key, pid, rid match
+			// if you find the right one, set IndexCursor.pid = PageId and IndexCursor.eid = searchKey index entry #
+			// if you DON'T find the right one, set IndexCursor = PageId of leaf node and eid = read description..?
+
     return 0;
 }
 
 /*
  * Read the (key, rid) pair at the location specified by the index cursor,
- * and move foward the cursor to the next entry.
+ * and move forward the cursor to the next entry.
  * @param cursor[IN/OUT] the cursor pointing to an leaf-node index entry in the b+tree
  * @param key[OUT] the key stored at the index cursor location.
  * @param rid[OUT] the RecordId stored at the index cursor location.
@@ -85,5 +128,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
+	// TODO: I'm not quite sure how to set up the buffer for this
+	// pf.read(cursor.pid, void *buffer);
     return 0;
 }

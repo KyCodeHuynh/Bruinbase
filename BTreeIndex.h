@@ -80,7 +80,7 @@ class BTreeIndex {
 
   /**
    * Read the (key, rid) pair at the location specified by the index cursor,
-   * and move foward the cursor to the next entry.
+   * and move forward the cursor to the next entry.
    * @param cursor[IN/OUT] the cursor pointing to an leaf-node index entry in the b+tree
    * @param key[OUT] the key stored at the index cursor location
    * @param rid[OUT] the RecordId stored at the index cursor location
