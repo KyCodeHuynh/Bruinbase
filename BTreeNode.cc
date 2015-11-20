@@ -458,82 +458,26 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
 {
     int offset = sizeof(int) + sizeof(PageId); 
-    NonLeafEntry entry; 
-    entry.key = key;
-    entry.pid = pid;
-
-    int searchIndex = getKeyCount() - 1;
-    int indexFirst = sizeof(int) + sizeof(PageId);
-    int indexLast = indexFirst + (getKeyCount() * sizeof(NonLeafEntry));
-    int indexCur = indexLast;
-    bool pastMid = false; 
-    int midpoint = floor(getKeyCount() / 2);
-    printf("MY MIDPOINT IS: %d\n", midpoint);
-
-    NonLeafEntry valPrev;
-    memcpy(&valPrev, &buffer[indexLast - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
-
-    // Same spot-finding algorithm as insert()
-    while ( (key < valPrev.key) && (indexFirst < indexCur) ) {
-        printf("VALPREV IS NOW: %d\n", valPrev.key);
-        if (searchIndex <= midpoint) {
-            pastMid = true;
-            printf("IT'S PAST MID\n");
-        }
-        // memmove(&buffer[indexCur], &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
-        // printf("MOVED THIS: %d\n", valPrev.key);
-
-        // Update index and value to compare against, which moves us leftward
-        searchIndex -= 1;
-        indexCur = indexCur - sizeof(NonLeafEntry);
-        memcpy(&valPrev, &buffer[indexCur - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));   
-    }
-
-    // Copy contents over to sibling node, which requires inserting
-    // everything from midpoint onward. 
     int count = 0;
-    int midIndex = offset + midpoint*sizeof(NonLeafEntry);
 
-    // Insert into appropriate node
-    // Must be done before we copy everything to a sibling node -- so we put it in the right one
-    // insert() will keep the order 
-    if (pastMid) {
-        printf("INSERTING: %d %d\n", entry.key, entry.pid);        
-        insert(entry.key, entry.pid);
-        indexLast += sizeof(NonLeafEntry);
-        // midIndex += sizeof(NonLeafEntry);
-    }
-    else {
-        sibling.insert(entry.key, entry.pid);
-        // count++;
-    }
+    insert(key, pid);
 
-    printf("MY COUNT IS: %d\n", count);
-    printf("MY MIDPOINT IS: %d\n", midpoint);
+    int midIndex = offset + (floor(getKeyCount() / 2))*sizeof(NonLeafEntry);
+    int indexLast = offset + (getKeyCount() * sizeof(NonLeafEntry));
 
-
-    // Get the midkey - that we will need to move up to the parent node
     NonLeafEntry midkeyEntry;    
     memcpy(&midkeyEntry, &buffer[midIndex], sizeof(NonLeafEntry));
     midKey = midkeyEntry.key;
 
+
     NonLeafEntry copy;
     for (int copyIndex = midIndex; copyIndex < indexLast; copyIndex += sizeof(NonLeafEntry)) {
         memcpy(&copy, &buffer[copyIndex], sizeof(NonLeafEntry));
-        printf("INSERTING KEY: %d\n",copy.key);
-        printf("INSERTING PID: %d\n",copy.pid);
         sibling.insert(copy.key, copy.pid);           
         count++; 
     }
 
-    // Memset current node's latter half to 0, as those keys were moved
-    // memset(buffer + midpoint, 0, PageFile::PAGE_SIZE - midpoint);
     setKeyCount(getKeyCount()-count);
-
-    // Set midKey - key in the middle after the split
-    // NonLeafEntry result; 
-    // memcpy(&result, &buffer[offset], sizeof(NonLeafEntry));
-    // midKey = result.key;
 
     return 0; 
 }

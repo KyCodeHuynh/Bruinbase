@@ -33,7 +33,7 @@ void printNode(BTNonLeafNode* node, PageFile* pagefile) {
     while(x < node->getKeyCount()) {
         memcpy(&inserted, &buffer[offset], sizeof(nonLeafEntry));
         printf("key: %d\n", inserted.key);
-        printf("pid: %d\n", inserted.pid);
+        // printf("pid: %d\n", inserted.pid);
         offset = offset + sizeof(nonLeafEntry);
         x++;
     }
@@ -83,8 +83,8 @@ void nonLeafNodeTest(PageFile nf) {
     assert(nonleafNode.getKeyCount() == 0); 
 
     // Debugging only
-    printf("End PageId: %d\n", nf.endPid());
-    printf("Return code: %d\n", nonleafNode.read(0, nf));
+    // printf("End PageId: %d\n", nf.endPid());
+    // printf("Return code: %d\n", nonleafNode.read(0, nf));
 
     // Now we load the actual disk page, which requires
     // us to write to the PageFile first, to set-up a page
@@ -162,10 +162,10 @@ void nonLeafNodeTest(PageFile nf) {
     assert(inserted2.pid == 4);
 
     // sanity check 
-    printNode(&nonleafNode, &nf);
+    // printNode(&nonleafNode, &nf);
 
-    printf("I'm going to re-initialize the node and see what happens\n");
-    printf("NEW ANSWER:\n");
+    // printf("I'm going to re-initialize the node and see what happens\n");
+    // printf("NEW ANSWER:\n");
 
     pid1 = 55;
     pid2 = 12;
@@ -173,8 +173,8 @@ void nonLeafNodeTest(PageFile nf) {
 
     assert(nonleafNode.initializeRoot(pid1, key1, pid2) == 0);
 
-    printNode(&nonleafNode, &nf);
-    printf("Adding -1 to the combo:\n\n");
+    // printNode(&nonleafNode, &nf);
+    // printf("Adding -1 to the combo:\n\n");
 
     // // This negative key should go first: -1, 10, 12, 15
     key1 = -1; 
@@ -188,8 +188,8 @@ void nonLeafNodeTest(PageFile nf) {
     assert(inserted2.key == -1);
     assert(inserted2.pid == 5);
 
-    printNode(&nonleafNode, &nf);
-    printf("key count: %d\n", nonleafNode.getKeyCount());
+    // printNode(&nonleafNode, &nf);
+    // printf("key count: %d\n", nonleafNode.getKeyCount());
 
     // Need to be able to insert at least 70 keys
     // We've inserted 5 so far, so let's insert 66 more for 71 total
@@ -216,6 +216,8 @@ void nonLeafNodeTest(PageFile nf) {
     printf("All 71 nodes have been inserted! \n");
     // printNode(&nonleafNode, &nf);
     printf("key count: %d\n", nonleafNode.getKeyCount());
+
+    //TESTING: locateChildPtr
 
     // We should now have: -1, 10, 12, 15, 42, 43, .., 107
     int pid = -1; 
@@ -248,39 +250,35 @@ void nonLeafNodeTest(PageFile nf) {
     BTNonLeafNode sibling;
     PageId insert = 1;
     int siblingKey = -1; 
-    nonleafNode.setKeyCount(6);
+    // nonleafNode.setKeyCount(6);
 
-    printf("Original Node:\n");
-    printf("original key count: %d\n", nonleafNode.getKeyCount());
-    printNode(&nonleafNode, &nf);
+    // printf("Original Node:\n");
+    // printf("original key count: %d\n", nonleafNode.getKeyCount());
+    // printNode(&nonleafNode, &nf);
 
-    printf("Sibling Node:\n");
-    printf("Sibling key count: %d\n", sibling.getKeyCount());
-    printNode(&sibling, &nf);
+    // printf("Sibling Node:\n");
+    // printf("Sibling key count: %d\n", sibling.getKeyCount());
+    // printNode(&sibling, &nf);
 
     // Sibling should get half of the keys, with 109 being its last
-    nonleafNode.insertAndSplit(4, insert, sibling, siblingKey);
+    nonleafNode.insertAndSplit(11, insert, sibling, siblingKey);
 
 
-    printf("CHANGED Original Node:\n");
-    printf("changed original key count: %d\n", nonleafNode.getKeyCount());
-    printNode(&nonleafNode, &nf);
-    // assert(leafNode.getKeyCount() == 36);
+    // printf("CHANGED Original Node:\n");
+    // printf("changed original key count: %d\n", nonleafNode.getKeyCount());
+    // printNode(&nonleafNode, &nf);
+    assert(nonleafNode.getKeyCount() == 36);
 
-    printf("CHANGED Sibling Node:\n");
-    printf("changed sibling key count: %d\n", sibling.getKeyCount());
-    printNode(&sibling, &nf);
-    printf("Sibling key is: %d\n", siblingKey);
-    // assert(sibling.getKeyCount() == 36);
-    // assert(siblingKey == 73);
+    // printf("CHANGED Sibling Node:\n");
+    // printf("changed sibling key count: %d\n", sibling.getKeyCount());
+    // printNode(&sibling, &nf);
+    // printf("Sibling key is: %d\n", siblingKey);
+    assert(sibling.getKeyCount() == 36);
+    assert(siblingKey == 72);
+    printf("insertAndSplit test works!\n");
 
     // printf("Sibling key count: %d\n", sibling.getKeyCount());
     // printf("Sibling's first key: %d\n", siblingKey);
-
-
-
-    /// TESTING: locateChildPtr()
-
 
 }
 
