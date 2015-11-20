@@ -137,6 +137,11 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 				// This should actually be VERY VERY similar to the "treeHeight == 1" case.
 				// You may be able to combine them in a recursive manner, with treeHeight ==1
 				// as the base case. COMING SOON	
+
+				// May need to make a separate function that does the recursion
+				// should pass in the tree Height and the current pid !!
+				
+
 			}
 		}
 
