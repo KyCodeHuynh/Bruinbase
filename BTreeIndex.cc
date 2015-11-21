@@ -68,6 +68,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
 		// leaf overflow
 		// if the parent of this is ALSO full.. need to do overflow again
+        // TODO: Write node contents to disk with BT(Non)LeafNode::write()
         // Update treeHeight when?
 
 
@@ -76,6 +77,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
 		// non-leaf overflow -- involves insertAndSplit
 		// if the parent is ALSO full, overflow again.. recursion
+    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
         // Update treeHeight when?
 
     return 0;
@@ -179,7 +181,6 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-
     // Assuming this is a leaf node, so we have a RecordId
     // Use readEntry(), then update cursor.eid += 1
 
