@@ -33,7 +33,7 @@ void printNode(BTNonLeafNode* node, PageFile* pagefile) {
     while(x < node->getKeyCount()) {
         memcpy(&inserted, &buffer[offset], sizeof(nonLeafEntry));
         printf("key: %d\n", inserted.key);
-        // printf("pid: %d\n", inserted.pid);
+        printf("pid: %d\n", inserted.pid);
         offset = offset + sizeof(nonLeafEntry);
         x++;
     }
@@ -218,6 +218,9 @@ void nonLeafNodeTest(PageFile nf) {
     printf("key count: %d\n", nonleafNode.getKeyCount());
 
     //TESTING: locateChildPtr
+    nonleafNode.setKeyCount(6);
+    printf("CRYSTAL TESTING locateChildPtr \n\n\n\n\n");
+    printNode(&nonleafNode, &nf);
 
     // We should now have: -1, 10, 12, 15, 42, 43, .., 107
     int pid = -1; 
@@ -239,8 +242,13 @@ void nonLeafNodeTest(PageFile nf) {
     searchKey = 106;
     int count = nonleafNode.getKeyCount();
 
-    assert(nonleafNode.locateChildPtr(107, pid) == 0);
-    assert(pid == 85);
+    // assert(nonleafNode.locateChildPtr(107, pid) == 0);
+    // assert(pid == 85);
+
+    pid = -1;
+    searchKey = 4;
+    printf("this was a: %d\n",nonleafNode.locateChildPtr(searchKey, pid));
+    printf("pid is: %d\n", pid);
 
     // printf("the pid is: %d\n", pid);
     // printf("the key count is: %d\n", count);

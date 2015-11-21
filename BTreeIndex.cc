@@ -80,6 +80,66 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 }
 
 /**
+* Recursive function to search through the nodes
+* to find the searchKey 
+* @param searchKey[IN] the key that we're looking for
+* @param cur_tree_height[IN] current tree height
+* @param cur_pid[IN] current page id of the current node
+* @param cursor[OUT] the cursor pointing to the index entry
+*/
+RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid) {
+	// If we are at the leaf node
+	if (cur_tree_height == 1) {
+		// Try to get the node that the pid is pointing to
+		BTLeafNode leafnode;
+		int rc = leafnode.read(cur_pid, pf);
+		if (rc < 0) {
+			return rc;
+		}
+
+		// look for the searchKey, set cursor.eid
+		rc = leafnode.locate(searchKey, cursor.eid);
+		if(rc < 0) {
+			return rc;
+		}
+
+		cursor.pid = cur_pid;
+		return 0;
+	}
+	// If we are at a non-leaf node
+	else if (cur_tree_height > 1) {
+		BTNonLeafNode nonleafnode;
+		int rc = nonleafnode.read(cur_pid, pf);
+		if (rc < 0) {
+			return rc;
+		}
+
+		PageId new_pid = -1;
+		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
+		if(rc < 0) {
+			return rc;
+		}
+
+		return find(searchKey, cursor, cur_tree_height-1, new_pid);
+	} 
+	// Shouldn't get to this point, but if for some reason, the height is 0
+	else {
+		return RC_NO_SUCH_RECORD;
+	}
+}
+
+// THINKING PROCESS.. FEEL FREE TO DELETE WHENEVER
+
+// if you're at a non-leaf node
+// use locateAtChildPtr() to get the key,pid
+// follow the pid to the next node - do the same thing
+
+// if you're at a leaf node
+// use locate() to get the key, pid, rid match
+	// if you find the right one, set IndexCursor.pid = PageId and IndexCursor.eid = searchKey index entry #
+	// if you DON'T find the right one, set IndexCursor = PageId of leaf node and eid = read description..?		
+
+/**
  * Run the standard B+Tree key search algorithm and identify the
  * leaf node where searchKey may exist. If an index entry with
  * searchKey exists in the leaf node, set IndexCursor to its location
@@ -108,51 +168,23 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 
 	// If it's height is 1, then the key MUST be in the root node
 	if (treeHeight == 1) {
-		// TODO -- CHECK THIS -------------------------------------------------ahhhhhhh
-		// Assuming that our only node is a LEAF node
-		BTLeafNode only_node;
-		int rc = only_node.read(rootPid, pf);
-		if (rc < 0) {
-			return rc;
-		}
-
-
-		// look for the searchKey
-		rc = only_node.locate(searchKey, found_eid);
-		if(rc < 0) {
-			return rc;
-		}
-
-		// set the cursor and exit
-		cursor.eid = found_eid;
-		return 0;
+		// // TODO -- CHECK THIS -------------------------------------------------ahhhhhhh
+		// // Assuming that our only node is a LEAF node, and the rootPid points to it
+		// other way -- use find function
+		return find(searchKey, cursor, treeHeight, rootPid);
 	}
 
 	// If it's NOT empty -- start at the root node, track each level you go down
 	if (treeHeight > 1) {
-		for (int i = treeHeight; i >= 1; i++) {
-			// If you've reached the leaf level
-			if (i == 1) {
-				BTLeafNode leafnode;
-				// This should actually be VERY VERY similar to the "treeHeight == 1" case.
-				// You may be able to combine them in a recursive manner, with treeHeight ==1
-				// as the base case. COMING SOON	
+		// This should actually be VERY VERY similar to the "treeHeight == 1" case.
+		// You may be able to combine them in a recursive manner, with treeHeight ==1
+		// as the base case. COMING SOON	
 
-				// May need to make a separate function that does the recursion
-				// should pass in the tree Height and the current pid !!
-				
+		// May need to make a separate function that does the recursion
+		// should pass in the tree Height and the current pid !!
 
-			}
-		}
-
-		// if you're at a non-leaf node
-		// use locateAtChildPtr() to get the key,pid
-		// follow the pid to the next node - do the same thing
-
-		// if you're at a leaf node
-		// use locate() to get the key, pid, rid match
-			// if you find the right one, set IndexCursor.pid = PageId and IndexCursor.eid = searchKey index entry #
-			// if you DON'T find the right one, set IndexCursor = PageId of leaf node and eid = read description..?		
+		// same thing as treeHeight == 1.. maybe we don't need different if statements?
+		return find(searchKey, cursor, treeHeight, rootPid);
 	}
 
     return 0;

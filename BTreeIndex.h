@@ -87,8 +87,19 @@ class BTreeIndex {
    * @return error code. 0 if no error
    */
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
-  
+
  private:
+
+  /**
+  * Recursive function to search through the nodes
+  * to find the searchKey 
+  * @param searchKey[IN] the key that we're looking for
+  * @param cur_tree_height[IN] current tree height
+  * @param cur_pid[IN] current page id of the current node
+  * @param cursor[OUT] the cursor pointing to the index entry
+  */
+  RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid);
+
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
   PageId   rootPid;    /// the PageId of the root node
