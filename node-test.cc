@@ -233,10 +233,12 @@ void nonLeafNodeTest(PageFile nf) {
     assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
     assert(pid == 12);
 
-    // Does not exist
+    // Greater than all of current keys, so return rightmost
     pid = -1; 
     searchKey = 109;
-    assert(nonleafNode.locateChildPtr(searchKey, pid) == RC_NO_SUCH_RECORD);
+    // printNode(&nonleafNode, &nf);
+    assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
+    assert(pid == 85);
 
     pid = -1; 
     searchKey = 106;
