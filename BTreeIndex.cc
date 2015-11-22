@@ -88,28 +88,46 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     	rootPid = new_pid;
     	treeHeight++;
  		return 0;
+	} else {
+
+		// Crystal: I think we need a recursive function
+		// 			We need to locate where the node is supposed to go
+		//			Try to insert stuff... and if it's full, do something else
+		//			Recursion will help to keep track of stuff. 
+
+		// GENERAL IDEA:
+		//
+		// 1. Look for where the node is SUPPOSED to go...
+		// 2. Figure out qualities of the node
+		//		IF IT'S ROOTPID ... 
+		//			(idk if there's any case where it would be root and NOT need a change)
+		//			a) insert() returns not full, insert successfully
+		//			b) returns full, deal with "new node insert"
+		// 		IF IT'S LEAF NODE:
+		//			a) insert() returns not full, insert successfully.
+		//			b) returns full, deal with "leaf overflow"
+		//				(also involves non-leaf inserting)
+		//		IF IT'S NON LEAF NODE:
+		//			a) insert() returns not full, insert successfully.
+		//			b) returns full, deal with "non leaf overflow"  
+
+		// Check if you're in a leaf node
+		// If you are, you're going to try to insert your key + rid !
+		// But you should first check if it will cause overflow.. cuz then u will need to do overflow+split
+
+			// leaf overflow
+			// if the parent of this is ALSO full.. need to do overflow again
+	        // TODO: Write node contents to disk with BT(Non)LeafNode::write()
+	        // Update treeHeight when?
+
+		// Check if you're in a non-leaf node
+		// you got to search where it has to go
+
+			// non-leaf overflow -- involves insertAndSplit
+			// if the parent is ALSO full, overflow again.. recursion
+	    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
+	        // Update treeHeight when?
 	}
-
-	// If so, put the first key in a leaf node!
-	// I'm considering having an initialized root node, with it pointing to 1-key leaf node
-
-	// Check if you're in a leaf node
-	// If you are, you're going to try to insert your key + rid !
-	// But you should first check if it will cause overflow.. cuz then u will need to do overflow+split
-
-		// leaf overflow
-		// if the parent of this is ALSO full.. need to do overflow again
-        // TODO: Write node contents to disk with BT(Non)LeafNode::write()
-        // Update treeHeight when?
-
-
-	// Check if you're in a non-leaf node
-	// you got to search where it has to go
-
-		// non-leaf overflow -- involves insertAndSplit
-		// if the parent is ALSO full, overflow again.. recursion
-    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
-        // Update treeHeight when?
 
     return 0;
 }
