@@ -70,18 +70,6 @@ int treeSetupTest(const std::string& filename)
 {
     BTreeIndex indexTree; 
 
-    // TODO: tests of treeHeight and rootPid helpers
-
-    // NOTE: treeHeight and rootPid are not available
-    // until an index file is loaded, so treeHeight below
-    // should be an error code, i.e., negative
-    // This is due to them being stored in page 0, but can be interpreted
-    // as BTreeIndex being an API atop raw PageFile data. 
-    // Without both, it's useless. 
-    if (indexTree.getTreeHeight() >= 0) {
-        return RC_INVALID_ATTRIBUTE;    
-    }
-
     // Try opening the passed-in filename
     // NOTE: Only insert() modifies a tree's nodes,
     // but this is our first test, so we need to 
@@ -90,18 +78,6 @@ int treeSetupTest(const std::string& filename)
     if (rc < 0) {
         return rc;
     }
-
-    // getTreeHeight() and getRootPid() are meant
-    // to only be called after insert(), but 
-    // we can check consistency between getters/setters first
-    int result = indexTree.getTreeHeight();
-    if (indexTree.getTreeHeight() != -1) {
-        return -1;
-    }
-
-
-
-
 
     rc = indexTree.close();
     if (rc < 0) {
