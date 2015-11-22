@@ -208,10 +208,25 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
         isInitialized = true;
 
-        // TODO: Create leaf node and insert into page 1
+        // Create leaf node and insert into page 1,
+        // as no nodes at all existed until now
         BTLeafNode leaf_root;
+        int rc = leaf_root.insert(key, rid);
+        if (rc < 0) {
+            return rc;
+        }
 
-        // TODO: Update rootPid and treeHeight
+        int destPid = pf.endPid();
+        rc = leaf_root.write(destPid, pf);
+        if (rc < 0) {
+            return rc;
+        }
+
+        // Update root pointer
+        setRootPid(destPid);
+        setTreeHeight(0);
+
+        return 0;
     }
 
     // CASE 1: Only the root node exists
@@ -220,6 +235,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // first few (key, RecordId) pairs. After insertion, we use BTLeafNode::write()
     // to write the node contents to our internal PageFile to save them. 
     else if (getTreeHeight() == 0) {
+        // Try insertion
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
         // using BTNonLeafNode::initializeRoot()
@@ -260,7 +276,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
  //    }
 
-    
+
 		// Crystal: I think we need a recursive function
 		// 			We need to locate where the node is supposed to go
 		//			Try to insert stuff... and if it's full, do something else
