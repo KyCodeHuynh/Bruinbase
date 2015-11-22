@@ -100,12 +100,52 @@ class BTreeIndex {
   */
   RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid);
 
+  /**
+  * Return the height of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  int getTreeHeight() const;
+
+  /**
+  * Set new height of the tree, stored in page 0
+  * Assumes that the PageFile has already been loaded.
+  * @param newHeight[IN] the new height of the tree
+  * @return error code. 0 if no error.
+  */
+  RC setTreeHeight(int newHeight);
+
+  /**
+  * Return the rootPid of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  PageId getRootPid() const;
+
+  /**
+  * Set new rootPid of the tree, stored in page 0
+  * Assumes that the PageFile has already been loaded.
+  * @param newRootPid[IN] the new rootPid of the tree
+  * @return error code. 0 if no error.
+  */
+  RC setRootPid(int newRootPid);
+
+
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
-  PageId   rootPid;    /// the PageId of the root node
-  int      treeHeight; /// the height of the tree
-  // TODO: Store the class variables on-disk, by keeping them in the
-  // first 2 * sizeof(int) bytes of the non-leaf node 
+  // See if PageFile loaded yet
+  bool isInitialized;
+  // PageId   rootPid;    /// the PageId of the root node
+  // int      treeHeight; /// the height of the tree
+
+  // PageId rootPid and int treeHeight are stored 
+  // in Page 0 of our internal PageFile.
+  // Order of storage: rootPid, treeHeight, 
+  // occupying the first sizeof(PageId) + sizeof(int) bytes
+  //
+  // Get/set them through the helpers above only. 
+  // This keeps us from forgetting to update
+  // the PageFile with the latest values of our class members
+
+
   /// Note that the content of the above two variables will be gone when
   /// this class is destructed. Make sure to store the values of the two 
   /// variables in disk, so that they can be reconstructed when the index

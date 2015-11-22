@@ -17,11 +17,19 @@ using namespace std;
  */
 BTreeIndex::BTreeIndex()
 {
-	// Default: rootPid is -1, which mean no node has been created
-    rootPid = -1;
+    // Cannot yet assume that PageFile is loaded;
+    // open() handles that. 
 
-    // Initialize tree height at 0 - there's no nodes
-    treeHeight = 0;
+    isInitialized = false;
+
+    // TODO: Do we actually use these class members anywhere? 
+    // Remove if not.
+
+	// // Default: rootPid is -1, which mean no node has been created
+ //    rootPid = -1;
+
+ //    // Initialize tree height at 0 - there's no nodes
+ //    treeHeight = 0;
 }
 
 /*
@@ -36,7 +44,13 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	// Open the index file
 	// Using the PageFile documentation for open()
 	// Will create an index file if it does not exist, and will return proper error codes
-    return pf.open(indexname, mode);
+    int rc = pf.open(indexname, mode);
+
+    if (rc < 0) {
+        return rc;
+    }
+
+    return 0;
 }
 
 /*
@@ -51,6 +65,90 @@ RC BTreeIndex::close()
     return pf.close();
 }
 
+
+/**
+* Return the height of the tree, stored in page 0 of our internal PageFile
+* Assumes that the PageFile has already been loaded.
+*/
+int BTreeIndex::getTreeHeight() const
+{
+    // PageFile does not yet have contents
+    // or is not yet loaded
+    if (! isInitialized) {
+        return -1;
+    }
+    // STORAGE in Page 0: [rootPid, treeHeight]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int treeHeight = 0; 
+    int offset = sizeof(PageId);
+
+    // C functions are not at all intuitive to read
+    memcpy(&treeHeight, &buffer[offset], sizeof(int));
+
+    // Sanity check, in case PageFile was not yet 
+    // initialized
+    if (treeHeight >= 0) {
+        return treeHeight;
+    }
+    else {
+        return 0;
+    }
+}
+
+
+/**
+* Set new height of the tree, stored in page 0
+* Assumes that the PageFile has already been loaded.
+* @param newHeight[IN] the new height of the tree
+* @return error code. 0 if no error.
+*/
+RC BTreeIndex::setTreeHeight(int newHeight)
+{
+    // STORAGE in Page 0: [rootPid, treeHeight]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int offset = sizeof(PageId);
+
+    // C functions are not at all intuitive to read
+    memcpy(&buffer[offset], &newHeight, sizeof(int));
+
+    // TODO: Error cases and handling? 
+    return 0;
+}
+
+
+/**
+* Return the rootPid of the tree, stored in page 0 of our internal PageFile
+* Assumes that the PageFile has already been loaded.
+*/
+PageId BTreeIndex::getRootPid() const
+{
+    return 0;
+}
+
+
+/**
+* Set new rootPid of the tree, stored in page 0
+* Assumes that the PageFile has already been loaded.
+* @param newRootPid[IN] the new rootPid of the tree
+* @return error code. 0 if no error.
+*/
+RC BTreeIndex::setRootPid(int newRootPid)
+{
+    // TODO: Error cases and handling? 
+    return 0;
+}
+
+
 /*
  * Insert (key, RecordId) pair to the index.
  * @param key[IN] the key for the value inserted into the index
@@ -59,37 +157,72 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
+    // CASE 0: Root node does not yet exist
+    //
+    // Reserve page 0 for tree information, 
+    // to allow a consistent buffer format for nodes
+    // in all remaining pages. The first node of the 
+    // tree will be found in page 1. 
+    if (isInitialized == false) {
+        // Initial rootPid and treeHeight are both 0
+        char buffer[1024];
+        memset(buffer, 0, 1024);
 
-	// *** FIRST NODE CASE ***
-	//
-	// When the rootPid is empty, it means there is no initialized nodes yet.
-	// This takes the first key, rid value and inserts it into a leaf node
-	// It then writes the node to the pagefile, updates values, and returns.
+        // endPid will automatically be updated to 1
+        pf.write(0, buffer);
+
+        isInitialized = true;
+
+        // TODO: Create leaf node and insert into page 1
+
+        // TODO: Update rootPid and treeHeight
+    }
+
+    // CASE 1: Only the root node exists
+    //
+    // Our root node begins as a leaf node, where we insert our 
+    // first few (key, RecordId) pairs. After insertion, we use BTLeafNode::write()
+    // to write the node contents to our internal PageFile to save them. 
+    else if (getTreeHeight() == 0) {
+        // If our root node is full, we have leaf node overflow
+        // We split into two leaf nodes, and create a parent non-leaf node
+        // using BTNonLeafNode::initializeRoot()
+
+        // TODO: Update the rootPid found in page 0
+        // TODO: Update the treeHeight found in page 0
+    }
+
+    // CASE 2: Root node + children exist
+
+    // TODO: See Crystal's notes below
+
+
 
 	// Check if it's empty
-	if (rootPid == -1) {
-		// Create the first leafnode
-		BTLeafNode leafnode;
-		// Insert the specified key and rid values
-		int rc = leafnode.insert(key, rid);
-		if (rc < 0 ) {
-			return rc;
-    	}
+	// if (rootPid == -1) {
+	// 	// Create the first leafnode
+	// 	BTLeafNode leafnode;
+	// 	// Insert the specified key and rid values
+	// 	int rc = leafnode.insert(key, rid);
+	// 	if (rc < 0 ) {
+	// 		return rc;
+ //    	}
 
-    	int new_pid = pf.endPid();
-    	// Write the new leafnode into the PageFile pf
-		rc = leafnode.write(new_pid, pf);
-		if (rc < 0 ) {
-			return rc;
-    	}
+ //    	int new_pid = pf.endPid();
+ //    	// Write the new leafnode into the PageFile pf
+	// 	rc = leafnode.write(new_pid, pf);
+	// 	if (rc < 0 ) {
+	// 		return rc;
+ //    	}
 
-    	// If everything succeeds,
-    	// assign rootPid to this node and update treeHeight
-    	rootPid = new_pid;
-    	treeHeight++;
- 		return 0;
-	} else {
+ //    	// If everything succeeds,
+ //    	// assign rootPid to this node and update treeHeight
+ //    	rootPid = new_pid;
+ //    	treeHeight++;
+ // 		return 0;
+	// } else {
 
+ //    }
 		// Crystal: I think we need a recursive function
 		// 			We need to locate where the node is supposed to go
 		//			Try to insert stuff... and if it's full, do something else
@@ -127,7 +260,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			// if the parent is ALSO full, overflow again.. recursion
 	    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
 	        // Update treeHeight when?
-	}
+
 
     return 0;
 }
@@ -206,13 +339,15 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
 	// If it's empty, return RC_NO_SUCH_RECORD
-	if (treeHeight == 0) {
+	if (getTreeHeight() == 0) {
 		return RC_NO_SUCH_RECORD;
 	}
     else {
         // find() is our recursive helper above, 
         // and implements the standard B+ tree search algorithm
-        return find(searchKey, cursor, treeHeight, rootPid);
+        // TODO: Double-check this function's last arg, 
+        // which is now getting rootPid via helper
+        return find(searchKey, cursor, getTreeHeight(), getRootPid());
     }
 
     return 0;
