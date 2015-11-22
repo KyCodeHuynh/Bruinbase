@@ -89,6 +89,12 @@ int treeSetupTest(const std::string& filename)
 
 int insertTest(const std::string& filename)
 {
+    BTreeIndex indexTree;
+    RecordId manyRID; 
+    manyRID.pid = 6; 
+    manyRID.sid = 7;
+    indexTree.insert(4,manyRID);
+    
     return 0;
 }
 

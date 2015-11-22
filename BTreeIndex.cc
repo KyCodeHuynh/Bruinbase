@@ -17,6 +17,7 @@ using namespace std;
  */
 BTreeIndex::BTreeIndex()
 {
+	// Default: rootPid is -1, which mean no node has been created
     rootPid = -1;
 
     // Initialize tree height at 0 - there's no nodes
@@ -58,7 +59,37 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
+
+	// *** FIRST NODE CASE ***
+	//
+	// When the rootPid is empty, it means there is no initialized nodes yet.
+	// This takes the first key, rid value and inserts it into a leaf node
+	// It then writes the node to the pagefile, updates values, and returns.
+
 	// Check if it's empty
+	if (rootPid == -1) {
+		// Create the first leafnode
+		BTLeafNode leafnode;
+		// Insert the specified key and rid values
+		int rc = leafnode.insert(key, rid);
+		if (rc < 0 ) {
+			return rc;
+    	}
+
+    	int new_pid = pf.endPid();
+    	// Write the new leafnode into the PageFile pf
+		rc = leafnode.write(new_pid, pf);
+		if (rc < 0 ) {
+			return rc;
+    	}
+
+    	// If everything succeeds,
+    	// assign rootPid to this node and update treeHeight
+    	rootPid = new_pid;
+    	treeHeight++;
+ 		return 0;
+	}
+
 	// If so, put the first key in a leaf node!
 	// I'm considering having an initialized root node, with it pointing to 1-key leaf node
 
@@ -156,8 +187,6 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-	int found_eid = -1;
-
 	// If it's empty, return RC_NO_SUCH_RECORD
 	if (treeHeight == 0) {
 		return RC_NO_SUCH_RECORD;
