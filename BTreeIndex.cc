@@ -72,11 +72,6 @@ RC BTreeIndex::close()
 */
 int BTreeIndex::getTreeHeight() const
 {
-    // PageFile does not yet have contents
-    // or is not yet loaded
-    if (! isInitialized) {
-        return -1;
-    }
     // STORAGE in Page 0: [rootPid, treeHeight]
     char buffer[1024]; 
     int rc = pf.read(0, buffer); 
@@ -90,13 +85,12 @@ int BTreeIndex::getTreeHeight() const
     // C functions are not at all intuitive to read
     memcpy(&treeHeight, &buffer[offset], sizeof(int));
 
-    // Sanity check, in case PageFile was not yet 
-    // initialized
+    // Sanity check, in case PageFile was not yet initialized
     if (treeHeight >= 0) {
         return treeHeight;
     }
     else {
-        return 0;
+        return -1;
     }
 }
 
@@ -132,7 +126,33 @@ RC BTreeIndex::setTreeHeight(int newHeight)
 */
 PageId BTreeIndex::getRootPid() const
 {
-    return 0;
+    // PageFile does not yet have contents
+    // or is not yet loaded, so no actual root yet
+    if (! isInitialized) {
+        return 0;
+    }
+    // STORAGE in Page 0: [rootPid, treeHeight]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int rootPid = 0; 
+    // PageId is stored first
+    int offset = 0; 
+
+    // C functions are not at all intuitive to read
+    memcpy(&rootPid, &buffer[offset], sizeof(PageId));
+
+    // Sanity check, in case PageFile was not yet initialized
+    if (rootPid >= 1) {
+        return rootPid;
+    }
+    else {
+        return 0;
+    }
+ 
 }
 
 
@@ -144,6 +164,18 @@ PageId BTreeIndex::getRootPid() const
 */
 RC BTreeIndex::setRootPid(int newRootPid)
 {
+    // STORAGE in Page 0: [rootPid, treeHeight]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int offset = 0;
+
+    // C functions are not at all intuitive to read
+    memcpy(&buffer[offset], &newRootPid, sizeof(PageId));
+
     // TODO: Error cases and handling? 
     return 0;
 }
@@ -166,6 +198,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     if (isInitialized == false) {
         // Initial rootPid and treeHeight are both 0
         char buffer[1024];
+
+        // We cannot use the setter helpers, as 
+        // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
 
         // endPid will automatically be updated to 1
@@ -174,6 +209,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         isInitialized = true;
 
         // TODO: Create leaf node and insert into page 1
+        BTLeafNode leaf_root;
 
         // TODO: Update rootPid and treeHeight
     }
@@ -223,6 +259,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	// } else {
 
  //    }
+
+    
 		// Crystal: I think we need a recursive function
 		// 			We need to locate where the node is supposed to go
 		//			Try to insert stuff... and if it's full, do something else
