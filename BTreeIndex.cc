@@ -235,85 +235,101 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // first few (key, RecordId) pairs. After insertion, we use BTLeafNode::write()
     // to write the node contents to our internal PageFile to save them. 
     else if (getTreeHeight() == 0) {
+        // Get leaf node
+        BTLeafNode leaf_root; 
+        int rc = leaf_root.read(getRootPid(), pf);
+        if (rc < 0) {
+            return rc;
+        }
+
         // Try insertion
+        rc = leaf_root.insert(key, rid);
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
         // using BTNonLeafNode::initializeRoot()
+        if (rc == RC_NODE_FULL) {
+            // These will be filled out by insertAndSplit()
+            BTLeafNode sibling;
+            int siblingKey;
+            leaf_root.insertAndSplit(key, rid, sibling, siblingKey);
 
-        // TODO: Update the rootPid found in page 0
-        // TODO: Update the treeHeight found in page 0
+            // Write out sibling to a new page
+            int siblingPid = pf.endPid();
+            rc = sibling.write(siblingPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+
+            // Update current leaf_root
+            rc = leaf_root.write(getRootPid(), pf);
+            if (rc < 0) {
+                return rc;
+            }
+
+            // Key inserted into parent is the first one in the new sibling
+            // No need to have the new root be the first page,
+            // which would be an expensive rearrangement. 
+            BTNonLeafNode new_root;
+
+            // insertAndSplit() lets us know the key that should be stored in parent
+            // getRootPid() here gets us the PageId for leaf_root, which is now left child
+            rc = new_root.initializeRoot(getRootPid(), siblingKey, siblingPid);
+            int rootPid = pf.endPid();
+            new_root.write(rootPid, pf);
+
+            // Update rootPid and treeHeight
+            setRootPid(rootPid);
+            setTreeHeight(getTreeHeight() + 1);
+        }
+        else {
+            // Insert succeded. Write out contents to PageFile
+            leaf_root.write(getRootPid(), pf);
+        }
     }
 
     // CASE 2: Root node + children exist
 
     // TODO: See Crystal's notes below
+    // Need to check for leaf overflow and non-leaf overflow, 
+    // possibly recursive. 
 
+	// Crystal: I think we need a recursive function
+	// 			We need to locate where the node is supposed to go
+	//			Try to insert stuff... and if it's full, do something else
+	//			Recursion will help to keep track of stuff. 
 
+	// GENERAL IDEA:
+	//
+	// 1. Look for where the node is SUPPOSED to go...
+	// 2. Figure out qualities of the node
+	//		IF IT'S ROOTPID ... 
+	//			(idk if there's any case where it would be root and NOT need a change)
+	//			a) insert() returns not full, insert successfully
+	//			b) returns full, deal with "new node insert"
+	// 		IF IT'S LEAF NODE:
+	//			a) insert() returns not full, insert successfully.
+	//			b) returns full, deal with "leaf overflow"
+	//				(also involves non-leaf inserting)
+	//		IF IT'S NON LEAF NODE:
+	//			a) insert() returns not full, insert successfully.
+	//			b) returns full, deal with "non leaf overflow"  
 
-	// Check if it's empty
-	// if (rootPid == -1) {
-	// 	// Create the first leafnode
-	// 	BTLeafNode leafnode;
-	// 	// Insert the specified key and rid values
-	// 	int rc = leafnode.insert(key, rid);
-	// 	if (rc < 0 ) {
-	// 		return rc;
- //    	}
+	// Check if you're in a leaf node
+	// If you are, you're going to try to insert your key + rid !
+	// But you should first check if it will cause overflow.. cuz then u will need to do overflow+split
 
- //    	int new_pid = pf.endPid();
- //    	// Write the new leafnode into the PageFile pf
-	// 	rc = leafnode.write(new_pid, pf);
-	// 	if (rc < 0 ) {
-	// 		return rc;
- //    	}
+		// leaf overflow
+		// if the parent of this is ALSO full.. need to do overflow again
+        // TODO: Write node contents to disk with BT(Non)LeafNode::write()
+        // Update treeHeight when?
 
- //    	// If everything succeeds,
- //    	// assign rootPid to this node and update treeHeight
- //    	rootPid = new_pid;
- //    	treeHeight++;
- // 		return 0;
-	// } else {
+	// Check if you're in a non-leaf node
+	// you got to search where it has to go
 
- //    }
-
-
-		// Crystal: I think we need a recursive function
-		// 			We need to locate where the node is supposed to go
-		//			Try to insert stuff... and if it's full, do something else
-		//			Recursion will help to keep track of stuff. 
-
-		// GENERAL IDEA:
-		//
-		// 1. Look for where the node is SUPPOSED to go...
-		// 2. Figure out qualities of the node
-		//		IF IT'S ROOTPID ... 
-		//			(idk if there's any case where it would be root and NOT need a change)
-		//			a) insert() returns not full, insert successfully
-		//			b) returns full, deal with "new node insert"
-		// 		IF IT'S LEAF NODE:
-		//			a) insert() returns not full, insert successfully.
-		//			b) returns full, deal with "leaf overflow"
-		//				(also involves non-leaf inserting)
-		//		IF IT'S NON LEAF NODE:
-		//			a) insert() returns not full, insert successfully.
-		//			b) returns full, deal with "non leaf overflow"  
-
-		// Check if you're in a leaf node
-		// If you are, you're going to try to insert your key + rid !
-		// But you should first check if it will cause overflow.. cuz then u will need to do overflow+split
-
-			// leaf overflow
-			// if the parent of this is ALSO full.. need to do overflow again
-	        // TODO: Write node contents to disk with BT(Non)LeafNode::write()
-	        // Update treeHeight when?
-
-		// Check if you're in a non-leaf node
-		// you got to search where it has to go
-
-			// non-leaf overflow -- involves insertAndSplit
-			// if the parent is ALSO full, overflow again.. recursion
-	    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
-	        // Update treeHeight when?
+		// non-leaf overflow -- involves insertAndSplit
+		// if the parent is ALSO full, overflow again.. recursion
+    // TODO: Write node contents to disk with BT(Non)LeafNode::write()
+        // Update treeHeight when?
 
 
     return 0;
