@@ -105,11 +105,13 @@ class BTreeIndex {
   /**
   * Recursive function to insert (key, RecordId) pairs
   * into the B+ tree index
+  * @param curDepth[IN] the depth this recursive call is at
   * @param key[IN] the key we're inserting
   * @param rid[IN] the RecordId we're inserting
+  * @param insertPid[IN] the PageId we're inserting (>= 1 when recursing on non-leaf; -1 otherwise)
   * @param visited[OUT] the stack of PageIds visited nodes, most recent on top
   */
-  RC helperInsert(int key, const RecordId& rid, PageId insertPid, std::stack<PageId> visited);
+  RC helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId> visited);
 
   /**
   * Return the height of the tree, stored in page 0 of our internal PageFile

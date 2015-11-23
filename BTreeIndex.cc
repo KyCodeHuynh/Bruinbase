@@ -177,21 +177,51 @@ RC BTreeIndex::setRootPid(int newRootPid)
     return 0;
 }
 
-RC BTreeIndex::helperInsert()
+ /**
+  * Recursive function to insert (key, RecordId) pairs
+  * into the B+ tree index
+  * @param curDepth[IN] the depth this recursive call is at
+  * @param key[IN] the key we're inserting
+  * @param rid[IN] the RecordId we're inserting
+  * @param insertPid[IN] the PageId we're inserting (>= 1 when recursing on non-leaf; -1 otherwise)
+  * @param visited[OUT] the stack of PageIds visited nodes, most recent on top
+  */
+RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId> visited)
 {
-    // Idea: Uses traversal logic similar to find()
-    // to figure out which leaf node the new key belongs in.
-    // Maintains a stack of visited nodes, 
-    // with the last visited one (presumably a leaf) at
-    // the top of the stack. 
+    // TODO: MODIFY find() first!
+    // Idea: find() gives back a stack of visited nodes
+    // (if the searchKey doesn't exist, find() gives back 
+    // the PageId of the leaf node where it should exist)
     //
-    // Whenever we have overflow that rises above the current level, 
-    // we'll need to go to the parent, which is the top stack item. 
-    // 
-    // Update treeHeight + rootPid whenever we generate a new root, 
-    // which we know happens we overflow at curDepth == 0
+    // We try insertion, beginning at the leaf found by find().
+    // Whenever we have overflow, we back to the parent node via 
+    // the visited stack, where the parent is at the top() after
+    // initial pop() for current node. This lets us recurse upward,
+    // from handling overflow that "bubbles up" from the leaf level.
 
+    // If at root (curDepth == 0), we have root overflow
+        // Pop off top of visited stack into non-leaf node
+        // initializeRoot() a new one
+        // setRootPid() and setTreeDepth()
 
+    // Else if at a leaf node (depth == treeHeight, with insertPid ignored)
+        // Pop off top of visited stack into leaf node
+        // Try insertion. Return if successful. 
+        // If overflow
+            // BTLeafNode::insertAndSplit 
+            // Recurse with insertPid == PageId of new sibling
+            // key == siblingKey, and depth = depth - 1
+            // NOTE: visited stack already modified by previous pop()
+
+    // Else at a non-leaf node (curDepth != treeHeight)
+        // Pop off top of visited stack into leaf node
+        // Try insertion with passed-in key and insertPid. Return if successful.
+        // If overflow
+            // BTNonLeafNode::insertAndSplit
+            // insertPid == PageId of new sibling
+            // key == siblingKey, and depth = depth - 1
+
+    return 0;
 }
 
 
@@ -301,15 +331,16 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         }
     }
 
+    // CASE 2: Root node + children exist
     else {
         // TODO: Modify find() to give back a stack 
         // of visited nodes. 
 
-        // Pass this into insertHelper to handle insertion
-        // TODO: Move above code into insertHelper
+        // TODO: Pass this stack into insertHelper to handle insertion
+
+        // TODO: Handle return codes from helperInsert()
     }
 
-    // CASE 2: Root node + children exist
 
     // TODO: See Crystal's notes below
     // Need to check for leaf overflow and non-leaf overflow, 
