@@ -10,6 +10,8 @@
 #ifndef BTREEINDEX_H
 #define BTREEINDEX_H
 
+#include <stack>
+
 #include "Bruinbase.h"
 #include "PageFile.h"
 #include "RecordFile.h"
@@ -99,6 +101,15 @@ class BTreeIndex {
   * @param cursor[OUT] the cursor pointing to the index entry
   */
   RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid);
+
+  /**
+  * Recursive function to insert (key, RecordId) pairs
+  * into the B+ tree index
+  * @param key[IN] the key we're inserting
+  * @param rid[IN] the RecordId we're inserting
+  * @param visited[OUT] the stack of PageIds visited nodes, most recent on top
+  */
+  RC helperInsert(int key, const RecordId& rid, PageId insertPid, std::stack<PageId> visited);
 
   /**
   * Return the height of the tree, stored in page 0 of our internal PageFile

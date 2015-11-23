@@ -22,9 +22,6 @@ BTreeIndex::BTreeIndex()
 
     isInitialized = false;
 
-    // TODO: Do we actually use these class members anywhere? 
-    // Remove if not.
-
 	// // Default: rootPid is -1, which mean no node has been created
  //    rootPid = -1;
 
@@ -180,6 +177,23 @@ RC BTreeIndex::setRootPid(int newRootPid)
     return 0;
 }
 
+RC BTreeIndex::helperInsert()
+{
+    // Idea: Uses traversal logic similar to find()
+    // to figure out which leaf node the new key belongs in.
+    // Maintains a stack of visited nodes, 
+    // with the last visited one (presumably a leaf) at
+    // the top of the stack. 
+    //
+    // Whenever we have overflow that rises above the current level, 
+    // we'll need to go to the parent, which is the top stack item. 
+    // 
+    // Update treeHeight + rootPid whenever we generate a new root, 
+    // which we know happens we overflow at curDepth == 0
+
+
+}
+
 
 /*
  * Insert (key, RecordId) pair to the index.
@@ -216,14 +230,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        int destPid = pf.endPid();
-        rc = leaf_root.write(destPid, pf);
+        // Make sure we write to page 1
+        rc = leaf_root.write(1, pf);
         if (rc < 0) {
             return rc;
         }
 
         // Update root pointer
-        setRootPid(destPid);
+        setRootPid(1);
         setTreeHeight(0);
 
         return 0;
@@ -285,6 +299,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // Insert succeded. Write out contents to PageFile
             leaf_root.write(getRootPid(), pf);
         }
+    }
+
+    else {
+        // TODO: Modify find() to give back a stack 
+        // of visited nodes. 
+
+        // Pass this into insertHelper to handle insertion
+        // TODO: Move above code into insertHelper
     }
 
     // CASE 2: Root node + children exist
