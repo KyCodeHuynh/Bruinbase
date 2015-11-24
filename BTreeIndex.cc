@@ -480,6 +480,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Initial insertPid is -1, as it's only used when we have overflow
         // Initial curDepth is tree height, as find() should ended on a leaf node
         std::stack<PageId> visited; 
+        IndexCursor ignoreThis;
+        find(key, ignoreThis, getTreeHeight(), getRootPid(), visited);
         int curDepth = getTreeHeight();
         int insertPid = -1;
         int rc = helperInsert(curDepth, key, rid, insertPid, visited);

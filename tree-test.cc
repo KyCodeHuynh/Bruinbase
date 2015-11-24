@@ -27,33 +27,33 @@ int main()
 {
     const std::string filename = "tree-test.txt";
 
-    int rc = treeSetupTest(filename);
-    if (rc < 0) {
-        printf("treeSetupTest FAILED with error: %d\n", rc);
+    int rc1 = treeSetupTest(filename);
+    if (rc1 < 0) {
+        printf("treeSetupTest FAILED with error: %d\n", rc1);
     }
 
     // Not else-if or return 1, as we want to see all failures
-    rc = insertTest(filename);
-    if (rc < 0) {
-        printf("insertTest FAILED with error: %d\n", rc);
+    int rc2 = insertTest(filename);
+    if (rc2 < 0) {
+        printf("insertTest FAILED with error: %d\n", rc2);
     }
 
     // Now that nodes are present, search among them
-    rc = locateTest(filename);
-    if (rc < 0) {
-        printf("locateTest FAILED with error: %d\n", rc);
+    int rc3 = locateTest(filename);
+    if (rc3 < 0) {
+        printf("locateTest FAILED with error: %d\n", rc3);
     }
 
     // Now that locate() is verified as working, 
     // we can use it to find contents. We then test
     // reading them out with readForward().
-    rc = readForwardTest(filename);
-    if (rc < 0) {
-        printf("readForwardTest FAILED with error: %d\n", rc);
+    int rc4 = readForwardTest(filename);
+    if (rc4 < 0) {
+        printf("readForwardTest FAILED with error: %d\n", rc4);
     }
 
     // Write this only once and break only once: after all tests have run
-    if (rc < 0) {
+    if (rc1 < 0 || rc2 < 0 || rc3 < 0 || rc4 < 0) {
         // See: https://stackoverflow.com/questions/18840422/do-negative-numbers-return-false-in-c-c
         // "A zero value, null pointer value, or null member pointer value is
         // converted to false; any other value is converted to true."
@@ -94,8 +94,12 @@ int insertTest(const std::string& filename)
     RecordId manyRID; 
     manyRID.pid = 6; 
     manyRID.sid = 7;
-    indexTree.insert(4, manyRID);
-    
+
+    int rc = indexTree.insert(4, manyRID);
+    if (rc < 0) {
+        return rc;
+    }
+
     return 0;
 }
 
