@@ -185,10 +185,10 @@ RC BTreeIndex::setRootPid(int newRootPid)
   * @param rid[IN] the RecordId we're inserting
   * @param insertPid[IN] the PageId we're inserting (>= 1 when recursing on non-leaf; -1 otherwise)
   * @param visited[OUT] the stack of PageIds visited nodes, most recent on top
+  * @return error code if error. 0 if successful.
   */
-RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId> visited)
+RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId>& visited)
 {
-    // TODO: MODIFY find() first!
     // Idea: find() gives back a stack of visited nodes
     // (if the searchKey doesn't exist, find() gives back 
     // the PageId of the leaf node where it should exist)
@@ -199,10 +199,63 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
     // initial pop() for current node. This lets us recurse upward,
     // from handling overflow that "bubbles up" from the leaf level.
 
-    // If at root (curDepth == 0), we have root overflow
+    // At root. Note that we get here after propagating upward
+    // from overflows at levels below, so insertPid should be passed in.g
+    if (curDepth == 0) {
         // Pop off top of visited stack into non-leaf node
-        // initializeRoot() a new one
-        // setRootPid() and setTreeDepth()
+        BTNonLeafNode current; 
+        PageId curPid = visited.top();
+        visited.pop();
+        int rc = current.read(curPid, pf);
+        if (rc < 0) {
+            return rc;
+        }
+
+        // Try insertion first 
+        rc = current.insert(key, insertPid);
+        // Node full?
+        if (rc == RC_NODE_FULL) {
+            // insertAndSplit() into a new sibling
+            BTNonLeafNode sibling;
+            int midKey = 0;
+            PageId siblingPid = pf.endPid();
+            current.insertAndSplit(key, insertPid, sibling, midKey);
+
+            // Write out updated sibling and current
+            rc = current.write(curPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+            rc = sibling.write(siblingPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+
+            // Create a new root and initialize it
+            BTNonLeafNode new_root;
+            rc = new_root.initializeRoot(curPid, midKey, siblingPid);
+            if (rc < 0) {
+                return rc;
+            }
+
+            PageId rootPid = pf.endPid(); 
+            rc = new_root.write(rootPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+
+            // Update rootPid and treeHeight
+            setRootPid(rootPid);
+            setTreeHeight(getTreeHeight() + 1);
+        }
+        else {
+            // Insert succeded. Write out contents to PageFile
+            current.write(curPid, pf);
+            return 0;
+        }
+
+        
+    }
 
     // Else if at a leaf node (depth == treeHeight, with insertPid ignored)
         // Pop off top of visited stack into leaf node
@@ -318,8 +371,11 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // insertAndSplit() lets us know the key that should be stored in parent
             // getRootPid() here gets us the PageId for leaf_root, which is now left child
             rc = new_root.initializeRoot(getRootPid(), siblingKey, siblingPid);
-            int rootPid = pf.endPid();
-            new_root.write(rootPid, pf);
+            PageId rootPid = pf.endPid();
+            rc = new_root.write(rootPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
 
             // Update rootPid and treeHeight
             setRootPid(rootPid);
@@ -328,24 +384,23 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         else {
             // Insert succeded. Write out contents to PageFile
             leaf_root.write(getRootPid(), pf);
+            return 0;
         }
     }
 
     // CASE 2: Root node + children exist
-    else {
-        // TODO: Modify find() to give back a stack 
-        // of visited nodes. 
-
-        // TODO: Pass this stack into insertHelper to handle insertion
-
-        // TODO: Handle return codes from helperInsert()
+    else { 
+        // Modified find() will record PageId's of nodes visited
+        // Lets us avoid duplicating traversal algorithm
+        // Initial insertPid is -1, as it's only used when we have overflow
+        std::stack<PageId> visited; 
+        int curDepth = 0;
+        int insertPid = -1;
+        int rc = helperInsert(curDepth, key, rid, insertPid, visited);
+        if (rc < 0) {
+            return rc;
+        }
     }
-
-
-    // TODO: See Crystal's notes below
-    // Need to check for leaf overflow and non-leaf overflow, 
-    // possibly recursive. 
-
 	// Crystal: I think we need a recursive function
 	// 			We need to locate where the node is supposed to go
 	//			Try to insert stuff... and if it's full, do something else
@@ -384,7 +439,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // TODO: Write node contents to disk with BT(Non)LeafNode::write()
         // Update treeHeight when?
 
-
+    // Insert succeeded
     return 0;
 }
 
@@ -396,7 +451,10 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 * @param cur_pid[IN] current page id of the current node
 * @param cursor[OUT] the cursor pointing to the index entry
 */
-RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid) {
+RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited) {
+    // Update stack of visited nodes
+    visited.push(cur_pid);
+
 	// If we are at the leaf node
 	if (cur_tree_height == 1) {
 		// Try to get the node that the pid is pointing to
@@ -433,7 +491,8 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 			return rc;
 		}
 
-		return find(searchKey, cursor, cur_tree_height - 1, new_pid);
+        std::stack<PageId> ignoreThis;
+		return find(searchKey, cursor, cur_tree_height - 1, new_pid, ignoreThis);
 	} 
 	// Shouldn't get to this point, but if for some reason, the height is 0
 	else {
@@ -470,7 +529,8 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
         // and implements the standard B+ tree search algorithm
         // TODO: Double-check this function's last arg, 
         // which is now getting rootPid via helper
-        return find(searchKey, cursor, getTreeHeight(), getRootPid());
+        std::stack<PageId> ignoreThis;
+        return find(searchKey, cursor, getTreeHeight(), getRootPid(), ignoreThis);
     }
 
     return 0;
