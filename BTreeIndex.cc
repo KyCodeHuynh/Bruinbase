@@ -211,7 +211,7 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             return rc;
         }
 
-        // Try insertion first 
+        // Try insertion first (PageId as this is a non-leaf node)
         rc = current.insert(key, insertPid);
         // Node full?
         if (rc == RC_NODE_FULL) {
@@ -257,14 +257,53 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         
     }
 
-    // Else if at a leaf node (depth == treeHeight, with insertPid ignored)
+    // Else if at a leaf node (with insertPid ignored)
+    if (curDepth == getTreeHeight()) {
         // Pop off top of visited stack into leaf node
-        // Try insertion. Return if successful. 
-        // If overflow
-            // BTLeafNode::insertAndSplit 
-            // Recurse with insertPid == PageId of new sibling
-            // key == siblingKey, and depth = depth - 1
+        BTLeafNode current; 
+        PageId curPid = visited.top(); 
+        visited.pop();
+        int rc = current.read(curPid, pf); 
+        if (rc < 0) {
+            return rc;
+        }
+
+        // Try insertion (RecordId as this is a leaf node)
+        rc = current.insert(key, rid);
+        
+        // Overflow? 
+        if (rc == RC_NODE_FULL) {
+            // insertAndSplit() into a new sibling
+            BTLeafNode sibling;
+            int siblingKey = 0;
+            PageId siblingPid = pf.endPid();
+            current.insertAndSplit(key, rid, sibling, siblingKey);
+            
+            // Write out updated sibling and current
+            rc = current.write(curPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+            rc = sibling.write(siblingPid, pf);
+            if (rc < 0) {
+                return rc;
+            }
+
+            // Recurse with insertPid == PageId of new sibling,
+            // key == siblingKey, and depth = depth - 1. 
+            // This will terminate in some level up above, when the 
+            // siblingKey and siblingPid are inserted into some ancestor, 
+            // possibly in a new root.
             // NOTE: visited stack already modified by previous pop()
+            helperInsert(curDepth - 1, siblingKey, rid, siblingPid, visited);
+        }
+        // Insertion attempt succeeded
+        else {
+            current.write(curPid, pf);
+            return 0;
+        }
+    }
+        
 
     // Else at a non-leaf node (curDepth != treeHeight)
         // Pop off top of visited stack into leaf node
@@ -393,8 +432,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Modified find() will record PageId's of nodes visited
         // Lets us avoid duplicating traversal algorithm
         // Initial insertPid is -1, as it's only used when we have overflow
+        // Initial curDepth is tree height, as find() should ended on a leaf node
         std::stack<PageId> visited; 
-        int curDepth = 0;
+        int curDepth = getTreeHeight();
         int insertPid = -1;
         int rc = helperInsert(curDepth, key, rid, insertPid, visited);
         if (rc < 0) {
