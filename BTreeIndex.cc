@@ -449,13 +449,21 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
+        int eid = -1;
+        rc = leaf_root.locate(4, eid);
+        printf("rc, eid: %d %d\n", rc, eid);
+
+
         printf("ROOT NODE EXISTS! YAY!\n");
         printf("ROOTPID: %d\n", getRootPid());
         printf("WORKING ON KEY %d\n", key);
 
 
         // Try insertion
+        printf("key count before: %d\n", leaf_root.getKeyCount());
         rc = leaf_root.insert(key, rid);
+        printf("key count after: %d\n", leaf_root.getKeyCount());
+
 
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
@@ -501,7 +509,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // Insert succeded. Write out contents to PageFile
             printf("root pid: %d\n", getRootPid());
             leaf_root.write(getRootPid(), pf);
-            printf("key count: %d\n", leaf_root.getKeyCount());
             return 0;
         }
     }
