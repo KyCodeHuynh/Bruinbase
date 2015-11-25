@@ -10,6 +10,9 @@
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
 
+// TODO: For debugging purposes only!
+#include <cstdio>
+
 using namespace std;
 
 /*
