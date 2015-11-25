@@ -100,9 +100,24 @@ int insertTest(const std::string& filename)
     manyRID.pid = 6; 
     manyRID.sid = 7;
 
+    // Case 0: Root node does not yet exist
     rc = indexTree.insert(4, manyRID);
     if (rc < 0) {
         return rc;
+    }
+
+    // Case 1: Only root node exists
+    rc = indexTree.insert(10, manyRID);
+    if (rc < 0) {
+        return rc;
+    }
+
+    // Case 2: Cause root node to overflow
+    for (int i = 15; i < 250; i++) {
+        rc = indexTree.insert(i, manyRID);
+        if (rc < 0) {
+            return rc;
+        }
     }
 
     return 0;
