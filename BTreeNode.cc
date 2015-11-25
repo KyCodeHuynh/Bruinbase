@@ -252,6 +252,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
  */
 RC BTLeafNode::locate(int searchKey, int& eid)
 { 
+    printf("LOOKING FOR KEY: %d\n", searchKey);
+    printf("KEY COUNT - node: %d\n", getKeyCount());
+
     // Linear search of entries for matching key
     // Return its index within the node in the 'eid' parameter
     int offset = sizeof(int) + sizeof(PageId); 

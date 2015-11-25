@@ -7,6 +7,9 @@
  * @date 3/24/2008
  */
  
+#include <cassert> 
+#include <cstdio>
+#include <cstring>
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
 
@@ -382,6 +385,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // in all remaining pages. The first node of the 
     // tree will be found in page 1. 
     if (isInitialized == false) {
+
+        printf("WORKING ON KEY %d\n", key);
+
         // Initial rootPid and treeHeight are both 0
         char buffer[1024];
 
@@ -389,7 +395,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
 
-        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         // endPid will automatically be updated to 1
         int rc = pf.write(0, buffer);
@@ -398,9 +404,11 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         isInitialized = true;
+
+        printf("got initial stuff down\n");
 
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
@@ -422,6 +430,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setRootPid(1);
         setTreeHeight(0);
 
+        printf("DONE WITH INSERT IN INDEX");
+
+
         return 0;
     }
 
@@ -438,8 +449,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
+        printf("ROOT NODE EXISTS! YAY!\n");
+        printf("ROOTPID: %d\n", getRootPid());
+        printf("WORKING ON KEY %d\n", key);
+
+
         // Try insertion
         rc = leaf_root.insert(key, rid);
+
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
         // using BTNonLeafNode::initializeRoot()
@@ -482,7 +499,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         }
         else {
             // Insert succeded. Write out contents to PageFile
+            printf("root pid: %d\n", getRootPid());
             leaf_root.write(getRootPid(), pf);
+            printf("key count: %d\n", leaf_root.getKeyCount());
             return 0;
         }
     }
@@ -566,11 +585,51 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 			return rc;
     	}
 
+        printf("KEY COUNT - find: %d\n", leafnode.getKeyCount());
+
+
+
+        // typedef struct LeafEntry {
+        //     int key;
+        //     RecordId rid;
+        // } LeafEntry;    
+
+        // int x = 0;
+
+        // char buffer[1024];
+        // // Need to read in PageFile's contents from our specific page
+        // // AFTER we've updated it with the latest, or else we won't 
+        // // be able to see the contents of the updated node
+        // leafnode.write(0, pf);
+        // pf.read(0, buffer);
+
+        // PageId next_pageid;
+        // memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
+        // printf("next page id: %d\n", next_pageid);
+
+        // LeafEntry inserted; 
+        // int offset = sizeof(int) + sizeof(PageId);
+
+        // while(x < leafnode.getKeyCount()) {
+        //     memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
+        //     printf("key: %d\n", inserted.key);
+        //     printf("pid: %d\n", inserted.rid.pid);
+        //     printf("sid: %d\n", inserted.rid.sid);
+        //     offset = offset + sizeof(LeafEntry);
+        //     x++;
+        // }
+
+
     	// look for the searchKey, set cursor.eid
     	rc = leafnode.locate(searchKey, cursor.eid);
     	if (rc < 0) {
     		return rc;
     	}
+
+        printf("FOUND KEY: %d\n", searchKey);
+        printf("FOUND PID: %d\n", cur_pid);
+        printf("FOUND EID: %d\n", cursor.eid);
+
 
         // Output PageId of located entry
         // cursor.eid is already set by BTLeafNode::locate() above
@@ -623,7 +682,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
 	// If it's empty, return RC_NO_SUCH_RECORD
-	if (getTreeHeight() == 0) {
+	if (getTreeHeight() == -1) {
 		return RC_NO_SUCH_RECORD;
 	}
     else {
