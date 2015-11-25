@@ -11,7 +11,7 @@
 #include "BTreeNode.h"
 
 // TODO: For debugging purposes only!
-#include <cstdio>
+// #include <cstdio>
 
 using namespace std;
 
@@ -45,6 +45,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	// Using the PageFile documentation for open()
 	// Will create an index file if it does not exist, and will return proper error codes
     int rc = pf.open(indexname, mode);
+    // printf("DEBUG: Return code from BTreeIndex::pf.open(): %d\n", rc);
 
     if (rc < 0) {
         return rc;
@@ -388,16 +389,16 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
 
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         // endPid will automatically be updated to 1
         int rc = pf.write(0, buffer);
         if (rc < 0) {
-            printf("DEBUG: pf.write() gave error: %d\n", rc);
+            // printf("DEBUG: pf.write() gave error: %d\n", rc);
             return rc;
         }
 
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         isInitialized = true;
 
@@ -415,7 +416,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        printf("DEBUG: Got paste the leaf_root.write()!");
+        // printf("DEBUG: Got paste the leaf_root.write()!");
 
         // Update root pointer
         setRootPid(1);

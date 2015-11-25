@@ -91,11 +91,16 @@ int treeSetupTest(const std::string& filename)
 int insertTest(const std::string& filename)
 {
     BTreeIndex indexTree;
+    int rc = indexTree.open(filename, 'w');
+    if (rc < 0) {
+        return rc;
+    }
+
     RecordId manyRID; 
     manyRID.pid = 6; 
     manyRID.sid = 7;
 
-    int rc = indexTree.insert(4, manyRID);
+    rc = indexTree.insert(4, manyRID);
     if (rc < 0) {
         return rc;
     }
@@ -106,6 +111,14 @@ int insertTest(const std::string& filename)
 
 int locateTest(const std::string& filename)
 {
+    BTreeIndex indexTree;
+    // locate() is read-only, 
+    // and "tree-test.txt" should have been 
+    // created by our previous tests
+    int rc = indexTree.open(filename, 'r');
+    if (rc < 0) {
+        return rc;
+    }
     return 0;
 }
 
