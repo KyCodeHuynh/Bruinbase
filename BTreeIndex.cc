@@ -385,15 +385,23 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
 
+        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+
         // endPid will automatically be updated to 1
-        pf.write(0, buffer);
+        int rc = pf.write(0, buffer);
+        if (rc < 0) {
+            printf("DEBUG: pf.write() gave error: %d\n", rc);
+            return rc;
+        }
+
+        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         isInitialized = true;
 
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
         BTLeafNode leaf_root;
-        int rc = leaf_root.insert(key, rid);
+        rc = leaf_root.insert(key, rid);
         if (rc < 0) {
             return rc;
         }
@@ -403,6 +411,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         if (rc < 0) {
             return rc;
         }
+
+        printf("DEBUG: Got paste the leaf_root.write()!");
 
         // Update root pointer
         setRootPid(1);

@@ -27,4 +27,4 @@ test: bruinbase $(NODE_TEST_SRC) $(SRC)
 	bash queries.sh
 
 clean:
-	rm -f bruinbase bruinbase.exe node-test *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl
+	rm -f bruinbase bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl
