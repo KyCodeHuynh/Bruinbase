@@ -558,7 +558,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     visited.push(cur_pid);
 
 	// If we are at the leaf node
-	if (cur_tree_height == 1) {
+	if (cur_tree_height == 0) {
 		// Try to get the node that the pid is pointing to
 		BTLeafNode leafnode;
 		int rc = leafnode.read(cur_pid, pf);
@@ -578,7 +578,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	return 0;
 	}
 	// If we are at a non-leaf node
-	else if (cur_tree_height > 1) {
+	else if (cur_tree_height > 0) {
 		BTNonLeafNode nonleafnode;
 		int rc = nonleafnode.read(cur_pid, pf);
 		if (rc < 0) {
