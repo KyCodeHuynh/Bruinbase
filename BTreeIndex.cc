@@ -386,16 +386,12 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // tree will be found in page 1. 
     if (isInitialized == false) {
 
-        printf("WORKING ON KEY %d\n", key);
-
         // Initial rootPid and treeHeight are both 0
         char buffer[1024];
 
         // We cannot use the setter helpers, as 
         // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
-
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         // endPid will automatically be updated to 1
         int rc = pf.write(0, buffer);
@@ -404,11 +400,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
-
         isInitialized = true;
-
-        printf("got initial stuff down\n");
 
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
@@ -430,9 +422,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setRootPid(1);
         setTreeHeight(0);
 
-        printf("DONE WITH INSERT IN INDEX");
-
-
         return 0;
     }
 
@@ -449,21 +438,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        int eid = -1;
-        rc = leaf_root.locate(4, eid);
-        printf("rc, eid: %d %d\n", rc, eid);
-
-
-        printf("ROOT NODE EXISTS! YAY!\n");
-        printf("ROOTPID: %d\n", getRootPid());
-        printf("WORKING ON KEY %d\n", key);
-
-
         // Try insertion
-        printf("key count before: %d\n", leaf_root.getKeyCount());
         rc = leaf_root.insert(key, rid);
-        printf("key count after: %d\n", leaf_root.getKeyCount());
-
 
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
@@ -507,7 +483,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         }
         else {
             // Insert succeded. Write out contents to PageFile
-            printf("root pid: %d\n", getRootPid());
             leaf_root.write(getRootPid(), pf);
             return 0;
         }

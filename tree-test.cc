@@ -33,8 +33,7 @@ int main()
     }
 
     // Not else-if or return 1, as we want to see all failures
-    // int rc2 = insertTest(filename);
-    int rc2 = 0;
+    int rc2 = insertTest(filename);
     if (rc2 < 0) {
         printf("insertTest FAILED with error: %d\n", rc2);
     }
@@ -120,24 +119,21 @@ int insertTest(const std::string& filename)
             return rc;
         }
     }
-
     return 0;
 }
 
 
 int locateTest(const std::string& filename)
 {
+
     BTreeIndex indexTree;
-    // locate() is read-only, 
-    // and "tree-test.txt" should have been 
-    // created by our previous tests
     int rc = indexTree.open(filename, 'w');
     if (rc < 0) {
         return rc;
     }
 
     RecordId manyRID; 
-    manyRID.pid = 1; 
+    manyRID.pid = 6; 
     manyRID.sid = 7;
 
     // Case 0: Root node does not yet exist
@@ -146,30 +142,19 @@ int locateTest(const std::string& filename)
         return rc;
     }
 
-    printf("PART ONE IS DONE\n");
-
-    manyRID.pid = 1; 
-    manyRID.sid = 8;
-
-
     // Case 1: Only root node exists
     rc = indexTree.insert(10, manyRID);
     if (rc < 0) {
         return rc;
     }
 
-    rc = indexTree.close();
-    if (rc < 0) {
-        return rc;
+    // Case 2: Cause root node to overflow
+    for (int i = 15; i < 250; i++) {
+        rc = indexTree.insert(i, manyRID);
+        if (rc < 0) {
+            return rc;
+        }
     }
-
-    printf("PART TWO IS DONE\n");
-
-    rc = indexTree.open(filename, 'r');
-    if (rc < 0) {
-        return rc;
-    }
-
 
     IndexCursor cursor; 
     // cursor.pid = 1; 
@@ -188,7 +173,7 @@ int locateTest(const std::string& filename)
     printf("1st Eid: %d\n", cursor.eid);
 
     // Locate deep node
-    rc = indexTree.locate(10, cursor);
+    rc = indexTree.locate(20, cursor);
     if (rc < 0) {
         return rc;
     }    
