@@ -36,8 +36,7 @@ int main()
     }
 
     // Not else-if or return 1, as we want to see all failures
-    // int rc2 = insertTest(filename);
-    int rc2 = 0;
+    int rc2 = insertTest(filename);
     if (rc2 < 0) {
         printf("insertTest FAILED with error: %d\n", rc2);
     }
@@ -129,29 +128,23 @@ int insertTest(const std::string& filename)
             return rc;
         }
     }
-
     return 0;
 }
 
 
 int locateTest(const std::string& filename)
 {
+
     BTreeIndex indexTree;
-    // locate() is read-only, 
-    // and "tree-test.txt" should have been 
-    // created by our previous tests
     int rc = indexTree.open(filename, 'w');
     if (rc < 0) {
         return rc;
     }
 
     RecordId manyRID; 
-    manyRID.pid = 1; 
+    manyRID.pid = 6; 
     manyRID.sid = 7;
 
-    // DEBUG: Try inserting and locating inside of 
-    // the same function. Do we have an issue with reloading
-    // tree data across BTreeIndex instances?
     rc = indexTree.insert(0, manyRID);
     if (rc < 0) {
         assert(0);
@@ -162,6 +155,7 @@ int locateTest(const std::string& filename)
     manyRID.sid = 8;
 
     rc = indexTree.insert(1, manyRID);
+
     if (rc < 0) {
         assert(0);
         return rc;
@@ -173,6 +167,7 @@ int locateTest(const std::string& filename)
         return rc;
     }
 
+    // DEBUG
     // printf("PART TWO IS DONE\n");
 
     rc = indexTree.open(filename, 'r');
@@ -180,10 +175,12 @@ int locateTest(const std::string& filename)
         assert(0);
         return rc;
     }
-    IndexCursor cursor; 
-    // cursor.pid = 1; 
-    // cursor.eid = 2;
 
+    IndexCursor cursor; 
+    cursor.pid = -1; 
+    cursor.eid = -1;
+
+    // DEBUG
     // printf("READY TO START LOCATING!\n");
 
     // Locate root node
@@ -193,18 +190,21 @@ int locateTest(const std::string& filename)
         return rc;
     }
 
+    // DEBUG
     printf("1st Pid (should be 1): %d\n", cursor.pid);
-    printf("1st Eid (should be 8): %d\n", cursor.eid);
+    printf("1st Eid (should be 0): %d\n", cursor.eid);
 
     // Locate deep node
-    rc = indexTree.locate(1, cursor);
+
+    rc = indexTree.locate(20, cursor);
     if (rc < 0) {
         assert(0);
         return rc;
     }    
 
+    // DEBUG
     printf("2nd Pid (should be 1): %d\n", cursor.pid);
-    printf("2nd Eid (should be 8): %d\n", cursor.eid);
+    printf("2nd Eid (should be 1): %d\n", cursor.eid);
 
     return 0;
 }

@@ -386,8 +386,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // tree will be found in page 1. 
     if (isInitialized == false) {
 
-        printf("WORKING ON KEY %d\n", key);
-
         // Initial rootPid and treeHeight are both 0
         char buffer[1024];
 
@@ -430,8 +428,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setRootPid(1);
         setTreeHeight(0);
 
-        printf("DONE WITH INSERT IN INDEX\n");
-
+        // printf("DONE WITH INSERT IN INDEX\n");
 
         return 0;
     }
@@ -455,16 +452,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // printf("rc, eid: %d %d\n", rc, eid);
 
 
+        // DEBUG:
         // printf("ROOT NODE EXISTS! YAY!\n");
         // printf("ROOTPID: %d\n", getRootPid());
         // printf("WORKING ON KEY %d\n", key);
 
-
-        // // Try insertion
         // printf("key count before: %d\n", leaf_root.getKeyCount());
         // rc = leaf_root.insert(key, rid);
         // printf("key count after: %d\n", leaf_root.getKeyCount());
 
+        // Try insertion
+        rc = leaf_root.insert(key, rid);
 
         // If our root node is full, we have leaf node overflow
         // We split into two leaf nodes, and create a parent non-leaf node
@@ -508,7 +506,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         }
         else {
             // Insert succeded. Write out contents to PageFile
-            printf("root pid: %d\n", getRootPid());
             leaf_root.write(getRootPid(), pf);
             return 0;
         }
@@ -593,9 +590,8 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 			return rc;
     	}
 
+        // DEBUG
         // printf("KEY COUNT - find: %d\n", leafnode.getKeyCount());
-
-
 
         // typedef struct LeafEntry {
         //     int key;
@@ -634,10 +630,10 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     		return rc;
     	}
 
+        // DEBUG
         // printf("FOUND KEY: %d\n", searchKey);
         // printf("FOUND PID: %d\n", cur_pid);
         // printf("FOUND EID: %d\n", cursor.eid);
-
 
         // Output PageId of located entry
         // cursor.eid is already set by BTLeafNode::locate() above
