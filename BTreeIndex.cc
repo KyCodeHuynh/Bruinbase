@@ -395,7 +395,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // page 0 is not yet allocated.
         memset(buffer, 0, 1024);
 
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         // endPid will automatically be updated to 1
         int rc = pf.write(0, buffer);
@@ -404,11 +404,11 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
+        // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
         isInitialized = true;
 
-        printf("got initial stuff down\n");
+        // printf("got initial stuff down\n");
 
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
@@ -430,7 +430,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setRootPid(1);
         setTreeHeight(0);
 
-        printf("DONE WITH INSERT IN INDEX");
+        printf("DONE WITH INSERT IN INDEX\n");
 
 
         return 0;
@@ -449,20 +449,21 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        int eid = -1;
-        rc = leaf_root.locate(4, eid);
-        printf("rc, eid: %d %d\n", rc, eid);
+        // DEBUG: For seeing if unit-test logic is incorrect
+        // int eid = -1;
+        // rc = leaf_root.locate(4, eid);
+        // printf("rc, eid: %d %d\n", rc, eid);
 
 
-        printf("ROOT NODE EXISTS! YAY!\n");
-        printf("ROOTPID: %d\n", getRootPid());
-        printf("WORKING ON KEY %d\n", key);
+        // printf("ROOT NODE EXISTS! YAY!\n");
+        // printf("ROOTPID: %d\n", getRootPid());
+        // printf("WORKING ON KEY %d\n", key);
 
 
-        // Try insertion
-        printf("key count before: %d\n", leaf_root.getKeyCount());
-        rc = leaf_root.insert(key, rid);
-        printf("key count after: %d\n", leaf_root.getKeyCount());
+        // // Try insertion
+        // printf("key count before: %d\n", leaf_root.getKeyCount());
+        // rc = leaf_root.insert(key, rid);
+        // printf("key count after: %d\n", leaf_root.getKeyCount());
 
 
         // If our root node is full, we have leaf node overflow
@@ -592,7 +593,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 			return rc;
     	}
 
-        printf("KEY COUNT - find: %d\n", leafnode.getKeyCount());
+        // printf("KEY COUNT - find: %d\n", leafnode.getKeyCount());
 
 
 
@@ -633,9 +634,9 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     		return rc;
     	}
 
-        printf("FOUND KEY: %d\n", searchKey);
-        printf("FOUND PID: %d\n", cur_pid);
-        printf("FOUND EID: %d\n", cursor.eid);
+        // printf("FOUND KEY: %d\n", searchKey);
+        // printf("FOUND PID: %d\n", cur_pid);
+        // printf("FOUND EID: %d\n", cursor.eid);
 
 
         // Output PageId of located entry
