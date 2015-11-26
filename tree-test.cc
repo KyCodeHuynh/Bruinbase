@@ -23,6 +23,9 @@ int insertTest(const std::string& filename);
 // Check locate()
 int locateTest(const std::string& filename);
 
+// Check insert() and locate() in succession
+int insertAndLocateTest(const std::string& filename);
+
 // Check readForward()
 int readForwardTest(const std::string& filename);
 
@@ -47,16 +50,22 @@ int main()
         printf("locateTest FAILED with error: %d\n", rc3);
     }
 
+    // Next, try insert() and locate() in succession
+    int rc4 = insertAndLocateTest(filename);
+    if (rc4 < 0) {
+        printf("insertAndLocateTest FAILED with error: %d\n", rc4);
+    }
+
     // Now that locate() is verified as working, 
     // we can use it to find contents. We then test
     // reading them out with readForward().
-    int rc4 = readForwardTest(filename);
-    if (rc4 < 0) {
-        printf("readForwardTest FAILED with error: %d\n", rc4);
+    int rc5 = readForwardTest(filename);
+    if (rc5 < 0) {
+        printf("readForwardTest FAILED with error: %d\n", rc5);
     }
 
     // Write this only once and break only once: after all tests have run
-    if (rc1 < 0 || rc2 < 0 || rc3 < 0 || rc4 < 0) {
+    if (rc1 < 0 || rc2 < 0 || rc3 < 0 || rc4 < 0 || rc5 < 5) {
         // See: https://stackoverflow.com/questions/18840422/do-negative-numbers-return-false-in-c-c
         // "A zero value, null pointer value, or null member pointer value is
         // converted to false; any other value is converted to true."
@@ -112,12 +121,14 @@ int insertTest(const std::string& filename)
     // Case 0: Root node does not yet exist
     rc = indexTree.insert(4, manyRID);
     if (rc < 0) {
+        assert(0);
         return rc;
     }
 
     // Case 1: Only root node exists
     rc = indexTree.insert(10, manyRID);
     if (rc < 0) {
+        assert(0);
         return rc;
     }
 
@@ -229,6 +240,23 @@ int locateTest(const std::string& filename)
     return 0;
 }
 
+int insertAndLocateTest(const std::string& filename)
+{
+    BTreeIndex indexTree;
+    int rc = indexTree.open(filename, 'w');
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
+    rc = indexTree.close();
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
+    return 0;
+}
 
 int readForwardTest(const std::string& filename)
 {
@@ -238,6 +266,7 @@ int readForwardTest(const std::string& filename)
     // created by our previous tests
     int rc = indexTree.open(filename, 'r');
     if (rc < 0) {
+        assert(0);
         return rc;
     }
 
