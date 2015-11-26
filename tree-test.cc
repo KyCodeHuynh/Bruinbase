@@ -158,7 +158,7 @@ int insertTest(const std::string& filename)
 int locateTest(const std::string& filename)
 {
     BTreeIndex indexTree;
-    int rc = indexTree.open(filename, 'w');
+    int rc = indexTree.open(filename, 'r');
     if (rc < 0) {
         return rc;
     }
@@ -166,70 +166,7 @@ int locateTest(const std::string& filename)
     // TODO: Try locating previous insert()
     // entries, which are i and i + 1
 
-    RecordId manyRID; 
-    manyRID.pid = 6; 
-    manyRID.sid = 7;
-
-    rc = indexTree.insert(0, manyRID);
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
-
-    manyRID.pid = 1; 
-    manyRID.sid = 8;
-
-    rc = indexTree.insert(1, manyRID);
-
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
-
-    rc = indexTree.close();
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
-
-    // DEBUG
-    // printf("PART TWO IS DONE\n");
-
-    rc = indexTree.open(filename, 'r');
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
-
-    IndexCursor cursor; 
-    cursor.pid = -1; 
-    cursor.eid = -1;
-
-    // DEBUG
-    // printf("READY TO START LOCATING!\n");
-
-    // Locate root node
-    rc = indexTree.locate(0, cursor);
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
-
-    // DEBUG
-    printf("1st Pid (should be 1): %d\n", cursor.pid);
-    printf("1st Eid (should be 0): %d\n", cursor.eid);
-
-    // Locate deep node
-
-    rc = indexTree.locate(20, cursor);
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }    
-
-    // DEBUG
-    printf("2nd Pid (should be 1): %d\n", cursor.pid);
-    printf("2nd Eid (should be 1): %d\n", cursor.eid);
+    
     
     rc = indexTree.close();
     if (rc < 0) {
@@ -248,6 +185,56 @@ int insertAndLocateTest(const std::string& filename)
         assert(0);
         return rc;
     }
+
+    RecordId manyRID; 
+    manyRID.pid = 6; 
+    manyRID.sid = 7;
+
+    rc = indexTree.insert(0, manyRID);
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
+    manyRID.pid = 1; 
+    manyRID.sid = 8;
+
+    rc = indexTree.insert(1, manyRID);
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
+    IndexCursor cursor; 
+    cursor.pid = -1; 
+    cursor.eid = -1;
+
+    // DEBUG
+    // printf("READY TO START LOCATING!\n");
+
+    // Try locate()'ing the previously inserted entries
+    rc = indexTree.locate(0, cursor);
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
+    // DEBUG
+    // printf("1st Pid (should be 1): %d\n", cursor.pid);
+    // printf("1st Eid (should be 0): %d\n", cursor.eid);
+
+    // TODO: The current problem case: output 
+    // internal state during insert() to see what's wrong
+
+    rc = indexTree.locate(10, cursor);
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }    
+
+    // DEBUG
+    printf("2nd Pid (should be 1): %d\n", cursor.pid);
+    printf("2nd Eid (should be 1): %d\n", cursor.eid);
 
     rc = indexTree.close();
     if (rc < 0) {
