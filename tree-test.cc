@@ -80,11 +80,16 @@ int treeSetupTest(const std::string& filename)
     // create that index file if it doesn't already exist
     int rc = indexTree.open(filename, 'w');
     if (rc < 0) {
+        // When NDEBUG is defined, 
+        // all assert()'s will be disabled, 
+        // but the error codes will be detected by main()
+        assert(0);
         return rc;
     }
 
     rc = indexTree.close();
     if (rc < 0) {
+        assert(0);
         return rc;
     }
 
@@ -128,18 +133,27 @@ int insertTest(const std::string& filename)
             return rc;
         }
     }
+
+    rc = indexTree.close();
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
+
     return 0;
 }
 
 
 int locateTest(const std::string& filename)
 {
-
     BTreeIndex indexTree;
     int rc = indexTree.open(filename, 'w');
     if (rc < 0) {
         return rc;
     }
+
+    // TODO: Try locating previous insert()
+    // entries, which are i and i + 1
 
     RecordId manyRID; 
     manyRID.pid = 6; 
@@ -205,6 +219,12 @@ int locateTest(const std::string& filename)
     // DEBUG
     printf("2nd Pid (should be 1): %d\n", cursor.pid);
     printf("2nd Eid (should be 1): %d\n", cursor.eid);
+    
+    rc = indexTree.close();
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
 
     return 0;
 }
@@ -228,6 +248,12 @@ int readForwardTest(const std::string& filename)
     // RecordId result;
     // indexTree.readForward(cursor, key, result);
     // assert(cursor.eid == 3);
+
+    rc = indexTree.close();
+    if (rc < 0) {
+        assert(0);
+        return rc;
+    }
 
     return 0;
 }
