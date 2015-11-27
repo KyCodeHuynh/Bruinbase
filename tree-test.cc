@@ -125,6 +125,16 @@ int insertTest(const std::string& filename)
         return rc;
     }
 
+    // DEBUG: try locate() right after insert() in same function
+    // IndexCursor cursor;
+    // rc = indexTree.locate(4, cursor);
+    // if (rc < 0) {
+    //     // DEBUG
+    //     printf("ERROR on locate(4) inside of insertTest(): %d\n", rc);
+    //     assert(0);
+    //     return rc;
+    // }
+
     // Avoid duplicate entries! 
     manyRID.pid = 7; 
     manyRID.sid = 8;
@@ -177,6 +187,8 @@ int locateTest(const std::string& filename)
 
     rc = indexTree.locate(4, cursor);
     if (rc < 0) {
+        // DEBUG
+        printf("ERROR on locate(4): %d\n", rc);
         assert(0);
         return rc;
     }

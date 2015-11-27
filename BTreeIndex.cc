@@ -596,6 +596,8 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 		BTLeafNode leafnode;
 		int rc = leafnode.read(cur_pid, pf);
 		if (rc < 0) {
+            // DEBUG
+            printf("ERROR: the leafnode.read() failed in find()\n");
 			return rc;
     	}
 
@@ -636,6 +638,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	// look for the searchKey, set cursor.eid
     	rc = leafnode.locate(searchKey, cursor.eid);
     	if (rc < 0) {
+            printf("ERROR: the no such record occurred in leafnode.locate()\n");
     		return rc;
     	}
 
@@ -662,6 +665,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
         // given a searchKey. We do this to traverse the tree.
 		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
 		if (rc < 0) {
+            printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
 			return rc;
 		}
 
@@ -670,6 +674,8 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 	} 
 	// Shouldn't get to this point, but if for some reason, the height is 0
 	else {
+        // DEBUG 
+        printf("ERROR: No such record happened as else-case of find()\n");
 		return RC_NO_SUCH_RECORD;
 	}
 }	
@@ -696,6 +702,8 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
 	// If it's empty, return RC_NO_SUCH_RECORD
 	if (getTreeHeight() == -1) {
+        // DEBUG
+        printf("ERROR: No such record happened at treeHeight check\n");
 		return RC_NO_SUCH_RECORD;
 	}
     else {
