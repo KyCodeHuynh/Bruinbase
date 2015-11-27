@@ -125,6 +125,10 @@ int insertTest(const std::string& filename)
         return rc;
     }
 
+    // Avoid duplicate entries! 
+    manyRID.pid = 7; 
+    manyRID.sid = 8;
+
     // Case 1: Only root node exists
     rc = indexTree.insert(10, manyRID);
     if (rc < 0) {
@@ -202,8 +206,8 @@ int insertAndLocateTest(const std::string& filename)
     }
 
     RecordId manyRID; 
-    manyRID.pid = 6; 
-    manyRID.sid = 7;
+    manyRID.pid = 8; 
+    manyRID.sid = 9;
 
     rc = indexTree.insert(0, manyRID);
     if (rc < 0) {
@@ -211,8 +215,8 @@ int insertAndLocateTest(const std::string& filename)
         return rc;
     }
 
-    manyRID.pid = 1; 
-    manyRID.sid = 8;
+    manyRID.pid = 9; 
+    manyRID.sid = 10;
 
     rc = indexTree.insert(1, manyRID);
     if (rc < 0) {
