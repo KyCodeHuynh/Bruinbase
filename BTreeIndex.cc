@@ -296,6 +296,10 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
                 return rc;
             }
 
+            // Update sibling pointer/PageId
+            current.setNextNodePtr(siblingPid);
+            sibling.setNextNodePtr(0);
+
             // Recurse with:
             // insertPid = siblingPid, the PageId of the new sibling
             // key = siblingKey
@@ -416,6 +420,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
+        // No sibling yet, so set sibling pointer/PageId to -1
+        leaf_root.setNextNodePtr(0);
+
         // Make sure we write to page 1
         rc = leaf_root.write(1, pf);
         if (rc < 0) {
@@ -494,6 +501,10 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             if (rc < 0) {
                 return rc;
             }
+
+            // Set sibling pointer/PageId
+            leaf_root.setNextNodePtr(siblingPid);
+            sibling.setNextNodePtr(0);
 
             // Key inserted into parent is the first one in the new sibling
             // No need to have the new root be the first page,
@@ -602,37 +613,37 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	}
 
         // DEBUG
-        // printf("KEY COUNT - find: %d\n", leafnode.getKeyCount());
+        printf("KEY COUNT inside of find(): %d\n", leafnode.getKeyCount());
 
-        // typedef struct LeafEntry {
-        //     int key;
-        //     RecordId rid;
-        // } LeafEntry;    
+        typedef struct LeafEntry {
+            int key;
+            RecordId rid;
+        } LeafEntry;    
 
-        // int x = 0;
+        int x = 0;
 
-        // char buffer[1024];
-        // // Need to read in PageFile's contents from our specific page
-        // // AFTER we've updated it with the latest, or else we won't 
-        // // be able to see the contents of the updated node
-        // leafnode.write(0, pf);
-        // pf.read(0, buffer);
+        char buffer[1024];
+        // Need to read in PageFile's contents from our specific page
+        // AFTER we've updated it with the latest, or else we won't 
+        // be able to see the contents of the updated node
+        leafnode.write(0, pf);
+        pf.read(0, buffer);
 
-        // PageId next_pageid;
-        // memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
-        // printf("next page id: %d\n", next_pageid);
+        PageId next_pageid;
+        memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
+        printf("next page id: %d\n", next_pageid);
 
-        // LeafEntry inserted; 
-        // int offset = sizeof(int) + sizeof(PageId);
+        LeafEntry inserted; 
+        int offset = sizeof(int) + sizeof(PageId);
 
-        // while(x < leafnode.getKeyCount()) {
-        //     memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
-        //     printf("key: %d\n", inserted.key);
-        //     printf("pid: %d\n", inserted.rid.pid);
-        //     printf("sid: %d\n", inserted.rid.sid);
-        //     offset = offset + sizeof(LeafEntry);
-        //     x++;
-        // }
+        while(x < leafnode.getKeyCount()) {
+            memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
+            printf("key: %d\n", inserted.key);
+            printf("pid: %d\n", inserted.rid.pid);
+            printf("sid: %d\n", inserted.rid.sid);
+            offset = offset + sizeof(LeafEntry);
+            x++;
+        }
 
 
     	// look for the searchKey, set cursor.eid
