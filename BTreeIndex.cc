@@ -422,7 +422,16 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        // printf("DEBUG: Got paste the leaf_root.write()!");
+        // DEBUG
+        // if (key == 4) {
+        //     IndexCursor cursor;
+        //     int rc = locate(4, cursor);
+        //     if (rc < 0) {
+        //         assert(0);
+        //     }
+        // }
+
+        // printf("DEBUG: Got past the leaf_root.write()!");
 
         // Update root pointer
         setRootPid(1);
