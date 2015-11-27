@@ -25,15 +25,17 @@ void printNode(BTNonLeafNode* node, PageFile* pagefile) {
 
     PageId first_pageid;
     memcpy(&first_pageid, &buffer[sizeof(int)], sizeof(PageId));
-    printf("first page id: %d\n", first_pageid);
+    // DEBUG
+    // printf("first page id: %d\n", first_pageid);
 
     nonLeafEntry inserted; 
     int offset = sizeof(int) + sizeof(PageId);
 
     while(x < node->getKeyCount()) {
         memcpy(&inserted, &buffer[offset], sizeof(nonLeafEntry));
-        printf("key: %d\n", inserted.key);
-        printf("pid: %d\n", inserted.pid);
+        // DEBUG
+        // printf("key: %d\n", inserted.key);
+        // printf("pid: %d\n", inserted.pid);
         offset = offset + sizeof(nonLeafEntry);
         x++;
     }
@@ -57,16 +59,18 @@ void printLeafNode(BTLeafNode* node, PageFile* pagefile) {
 
     PageId next_pageid;
     memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
-    printf("next page id: %d\n", next_pageid);
+    // DEBUG
+    // printf("next page id: %d\n", next_pageid);
 
     LeafEntry inserted; 
     int offset = sizeof(int) + sizeof(PageId);
 
     while(x < node->getKeyCount()) {
         memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
-        printf("key: %d\n", inserted.key);
-        printf("pid: %d\n", inserted.rid.pid);
-        printf("sid: %d\n", inserted.rid.sid);
+        // DEBUG
+        // printf("key: %d\n", inserted.key);
+        // printf("pid: %d\n", inserted.rid.pid);
+        // printf("sid: %d\n", inserted.rid.sid);
         offset = offset + sizeof(LeafEntry);
         x++;
     }
@@ -82,7 +86,7 @@ void nonLeafNodeTest(PageFile nf) {
     // Key count is initially zero, as is next sibling PageId
     assert(nonleafNode.getKeyCount() == 0); 
 
-    // Debugging only
+    // DEBUG
     // printf("End PageId: %d\n", nf.endPid());
     // printf("Return code: %d\n", nonleafNode.read(0, nf));
 
@@ -157,6 +161,7 @@ void nonLeafNodeTest(PageFile nf) {
     nonleafNode.write(0, nf);
     nf.read(0, buffer2);
     memcpy(&inserted2, &buffer2[insertPoint], sizeof(nonLeafEntry));
+    // DEBUG
     // printf("Key at second entry: %d\n", inserted.key);
     assert(inserted2.key == 12);
     assert(inserted2.pid == 4);
@@ -164,6 +169,7 @@ void nonLeafNodeTest(PageFile nf) {
     // sanity check 
     // printNode(&nonleafNode, &nf);
 
+    // DEBUG 
     // printf("I'm going to re-initialize the node and see what happens\n");
     // printf("NEW ANSWER:\n");
 
@@ -174,6 +180,7 @@ void nonLeafNodeTest(PageFile nf) {
     assert(nonleafNode.initializeRoot(pid1, key1, pid2) == 0);
 
     // printNode(&nonleafNode, &nf);
+    // DEBUG
     // printf("Adding -1 to the combo:\n\n");
 
     // // This negative key should go first: -1, 10, 12, 15
@@ -184,10 +191,12 @@ void nonLeafNodeTest(PageFile nf) {
     nonleafNode.write(0, nf);
     nf.read(0, buffer2);
     memcpy(&inserted2, &buffer2[insertPoint], sizeof(nonLeafEntry));
+    // DEBUG
     // printf("Key at second entry: %d\n", inserted.key);
     assert(inserted2.key == -1);
     assert(inserted2.pid == 5);
 
+    // DEBUG
     // printNode(&nonleafNode, &nf);
     // printf("key count: %d\n", nonleafNode.getKeyCount());
 
@@ -213,9 +222,10 @@ void nonLeafNodeTest(PageFile nf) {
         manyPID++;
     }
     // assert(nonleafNode.getKeyCount() == 71);
-    printf("All 71 nodes have been inserted! \n");
+    // DEBUG
+    // printf("All 71 nodes have been inserted! \n");
     // printNode(&nonleafNode, &nf);
-    printf("key count: %d\n", nonleafNode.getKeyCount());
+    // printf("key count: %d\n", nonleafNode.getKeyCount());
 
     //TESTING: locateChildPtr
     // nonleafNode.setKeyCount(6);
@@ -249,6 +259,7 @@ void nonLeafNodeTest(PageFile nf) {
 
     // pid = -1;
     // searchKey = 4;
+    // DEBUG
     // printf("this was a: %d\n",nonleafNode.locateChildPtr(searchKey, pid));
     // printf("pid is: %d\n", pid);
 
@@ -262,6 +273,7 @@ void nonLeafNodeTest(PageFile nf) {
     int siblingKey = -1; 
     // nonleafNode.setKeyCount(6);
 
+    // DEBUG
     // printf("Original Node:\n");
     // printf("original key count: %d\n", nonleafNode.getKeyCount());
     // printNode(&nonleafNode, &nf);
@@ -274,19 +286,23 @@ void nonLeafNodeTest(PageFile nf) {
     nonleafNode.insertAndSplit(11, insert, sibling, siblingKey);
 
 
+    // DEBUG
     // printf("CHANGED Original Node:\n");
     // printf("changed original key count: %d\n", nonleafNode.getKeyCount());
     // printNode(&nonleafNode, &nf);
     assert(nonleafNode.getKeyCount() == 36);
 
+    // DEBUG
     // printf("CHANGED Sibling Node:\n");
     // printf("changed sibling key count: %d\n", sibling.getKeyCount());
     // printNode(&sibling, &nf);
     // printf("Sibling key is: %d\n", siblingKey);
     assert(sibling.getKeyCount() == 36);
     assert(siblingKey == 72);
-    printf("insertAndSplit test works!\n");
+    // DEBUG
+    // printf("insertAndSplit test works!\n");
 
+    // DEBUG
     // printf("Sibling key count: %d\n", sibling.getKeyCount());
     // printf("Sibling's first key: %d\n", siblingKey);
 
@@ -314,7 +330,7 @@ int main()
     assert(leafNode.getKeyCount() == 0); 
     assert((int)leafNode.getNextNodePtr() == 0); 
 
-    // Debugging only
+    // DEBUG
     // printf("End PageId: %d\n", pf.endPid());
     // printf("Return code: %d\n", leafNode.read(0, pf));
 
@@ -398,6 +414,7 @@ int main()
     leafNode.write(0, pf);
     pf.read(0, buffer);
     memcpy(&inserted, &buffer[insertPoint], sizeof(LeafEntry));
+    // DEBUG
     // printf("Key at second entry: %d\n", inserted.key);
     assert(inserted.key == 12);
     assert(inserted.rid.pid == 4);
@@ -412,6 +429,7 @@ int main()
     leafNode.write(0, pf);
     pf.read(0, buffer);
     memcpy(&inserted, &buffer[insertPoint], sizeof(LeafEntry));
+    // DEBUG
     // printf("Key at second entry: %d\n", inserted.key);
     assert(inserted.key == -1);
     assert(inserted.rid.pid == 5);
@@ -471,6 +489,7 @@ int main()
     eid = -1; 
     searchKey = 108; 
     leafNode.locate(searchKey, eid);
+    // DEBUG
     // printf("eid: %d\n", eid);
     assert(leafNode.locate(searchKey, eid) == 0);
     assert(eid == leafNode.getKeyCount() - 1);
@@ -522,6 +541,7 @@ int main()
     insert.sid = 2;
     int siblingKey = -1; 
 
+    // DEBUG
     // printf("Original Node:\n");
     // printf("original key count: %d\n", leafNode.getKeyCount());
     // printLeafNode(&leafNode, &pf);
@@ -534,6 +554,7 @@ int main()
     leafNode.insertAndSplit(11, insert, sibling, siblingKey);
 
 
+    // DEBUG
     // printf("CHANGED Original Node:\n");
     // printf("changed original key count: %d\n", leafNode.getKeyCount());
     // printLeafNode(&leafNode, &pf);
