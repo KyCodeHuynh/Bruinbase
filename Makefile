@@ -14,7 +14,7 @@ SqlParser.tab.c: SqlParser.y
 	bison -d -psql $<
 
 # TODO: Comment out before submission, just in case TA uses this Makefile
-test: bruinbase $(NODE_TEST_SRC) $(SRC)
+test: bruinbase $(NODE_TEST_SRC) $(TREE_TEST_SRC) $(SRC)
 	# Test BTreeNode
 	g++ -o node-test $(NODE_TEST_SRC) 
 	chmod 0755 node-test
@@ -25,6 +25,7 @@ test: bruinbase $(NODE_TEST_SRC) $(SRC)
 	./tree-test
 	# Test everything via SqlEngine
 	bash queries.sh
+	# TODO: Copy in provided 2D tests and run, then rm them here
 
 clean:
-	rm -f bruinbase bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl
+	rm -f bruinbase bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt indexmovie.idx *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl

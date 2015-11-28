@@ -15,6 +15,7 @@
 #include "Bruinbase.h"
 #include "SqlEngine.h"
 // CRYSTAL - I feel like we need to include this header file
+// KY-CUONG - I'm fairly sure we need to do so
 #include "BTreeIndex.h"
 
 using namespace std;
@@ -133,7 +134,6 @@ exit_select:
     return rc;
 }
 
-// TODO: For part A, we assume index is always false and ignore it.
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
     // TODO: Implement! 
@@ -165,11 +165,16 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     ifstream load; 
     load.open(loadfile.c_str( ));
 
+    // DEBUG
+    fprintf(stderr, "We past opening the loadfile\n");
+
     // CRYSTAL
-    // If index is true, make a BTreeIndex
+    // If index is true, make a BTreeIndex in addition to the RecordFile
     // I was going to try and integrate both methods, but that would add extra logic in the while() statement
     if (index == true) {
-        if (retIndexCode = indexFile.open(table + ".idx", 'w') < 0) {    
+        // DEBUG
+        fprintf(stderr, "Desire to make index is TRUE!\n");
+        if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {    
             fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
             return retIndexCode;        
         }
@@ -188,13 +193,19 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 recFile.append(key, value, rid);
                 indexFile.insert(key, rid);
             }
-        } else {
+        } 
+        else {
             fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
             return RC_FILE_OPEN_FAILED;
         }
 
         indexFile.close(); 
-    } else {
+    } 
+    // TODO: We actually always need to load into a RecordFile
+    // It's only optional on whether or not we create a BTreeIndex
+    else {
+        // DEBUG: 
+        fprintf(stderr, "Desire to make index is FALSE!\n");
         if (load.is_open()) {
             int key = -1; 
             string value = "";

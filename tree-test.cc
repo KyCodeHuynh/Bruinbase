@@ -73,7 +73,8 @@ int main()
         return -1;
     }
 
-    printf("All BTreeIndex tests passed!\n");
+    // Silence is golden
+    // printf("All BTreeIndex tests passed!\n");
     
     return 0;
 }

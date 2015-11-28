@@ -265,12 +265,13 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     while (searchPoint < (offset + (getKeyCount() * sizeof(LeafEntry)))) {
         memcpy(&entry, &buffer[searchPoint], sizeof(LeafEntry));
 
-        // DEBUG
-        if (searchKey == 4) {
-            printf("Inside of BTLeafNode::locate()\n");
-            printf("entry.key: %d\n", entry.key);
-            printf("searchKey arg: %d\n", searchKey);
-        }
+        // // DEBUG
+        // if (searchKey == 4) {
+        //     printf("Inside of BTLeafNode::locate()\n");
+        //     printf("entry.key: %d\n", entry.key);
+        //     printf("searchKey arg: %d\n", searchKey);
+        // }
+        
         // Found the entry
         if (entry.key == searchKey) {
             eid = searchIndex;

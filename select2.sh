@@ -1,6 +1,6 @@
 #!/bin/bash
 
-printf "===Testing===: SELECT COUNT\n\n"
+printf "==Testing==: SELECT COUNT\n\n"
 test2=$(./bruinbase << END
 SELECT COUNT(*) FROM Movie
 QUIT

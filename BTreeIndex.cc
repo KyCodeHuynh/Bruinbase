@@ -192,7 +192,7 @@ PageId BTreeIndex::getRootPid() const
     // or is not yet loaded, so no actual root yet
     if (getInit() <= 0) {
         // DEBUG
-        printf("getRootPid() reports not yet initialized or its empty. Give 0 by default.\n");
+        // printf("getRootPid() reports not yet initialized or its empty. Give 0 by default.\n");
         return 0;
     }
     // STORAGE in Page 0: [rootPid, treeHeight]
@@ -215,7 +215,7 @@ PageId BTreeIndex::getRootPid() const
     }
     else {
         // DEBUG
-        printf("Else case of getRootPid(), so 0\n");
+        // printf("Else case of getRootPid(), so 0\n");
         return 0;
     }
  
@@ -486,7 +486,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         rc = leaf_root.insert(key, rid);
         if (rc < 0) {
             // DEBUG
-            printf("Empty tree case leaf_root.insert() failed!\n");
+            // printf("Empty tree case leaf_root.insert() failed!\n");
             return rc;
         }
 
@@ -517,7 +517,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setTreeHeight(0);
 
         // DEBUG: Print out page 0 contents
-        printf("rootPid right after initial insert(): %d\n", getRootPid());
+        // printf("rootPid right after initial insert(): %d\n", getRootPid());
         // pf.read(0, buffer);
         // PageId testPid;
         // int testHeight;
@@ -715,7 +715,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     visited.push(cur_pid);
 
     // DEBUG: 
-    printf("cur_pid of find(): %d\n", cur_pid);
+    // printf("cur_pid of find(): %d\n", cur_pid);
 
 	// If we are at the leaf node
 	if (cur_tree_height == 0) {
@@ -724,7 +724,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 		int rc = leafnode.read(cur_pid, pf);
 		if (rc < 0) {
             // DEBUG
-            printf("ERROR: the leafnode.read() failed in find()\n");
+            // printf("ERROR: the leafnode.read() failed in find()\n");
 			return rc;
     	}
 
@@ -789,7 +789,8 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
         // given a searchKey. We do this to traverse the tree.
 		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
 		if (rc < 0) {
-            printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
+            // DEBUG
+            // printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
 			return rc;
 		}
 
@@ -799,7 +800,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 	// Shouldn't get to this point, but if for some reason, the height is 0
 	else {
         // DEBUG 
-        printf("ERROR: No such record happened as else-case of find()\n");
+        // printf("ERROR: No such record happened as else-case of find()\n");
 		return RC_NO_SUCH_RECORD;
 	}
 }	
@@ -827,7 +828,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	// If it's empty, return RC_NO_SUCH_RECORD
 	if (getTreeHeight() == -1) {
         // DEBUG
-        printf("ERROR: No such record happened at treeHeight check\n");
+        // printf("ERROR: No such record happened at treeHeight check\n");
 		return RC_NO_SUCH_RECORD;
 	}
     else {
@@ -837,7 +838,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
         // which is now getting rootPid via helper
         std::stack<PageId> ignoreThis;
         // DEBUG
-        printf("rootPid just before find() invocation [Line %d]: %d\n", __LINE__, getRootPid());
+        // printf("rootPid just before find() invocation [Line %d]: %d\n", __LINE__, getRootPid());
         return find(searchKey, cursor, getTreeHeight(), getRootPid(), ignoreThis);
     }
 
