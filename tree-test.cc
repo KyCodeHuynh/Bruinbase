@@ -193,11 +193,11 @@ int locateTest(const std::string& filename)
         return rc;
     }
 
-    rc = indexTree.locate(10, cursor);
-    if (rc < 0) {
-        assert(0);
-        return rc;
-    }
+    // rc = indexTree.locate(10, cursor);
+    // if (rc < 0) {
+    //     assert(0);
+    //     return rc;
+    // }
     
     rc = indexTree.close();
     if (rc < 0) {

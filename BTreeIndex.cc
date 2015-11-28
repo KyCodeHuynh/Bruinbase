@@ -138,6 +138,8 @@ PageId BTreeIndex::getRootPid() const
     // PageFile does not yet have contents
     // or is not yet loaded, so no actual root yet
     if (! isInitialized) {
+        // DEBUG
+        printf("getRootPid() reports not yet initialized. Give 0 by default.\n");
         return 0;
     }
     // STORAGE in Page 0: [rootPid, treeHeight]
@@ -159,6 +161,8 @@ PageId BTreeIndex::getRootPid() const
         return rootPid;
     }
     else {
+        // DEBUG
+        printf("Else case of getRootPid(), so 0\n");
         return 0;
     }
  
@@ -459,12 +463,13 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setTreeHeight(0);
 
         // DEBUG: Print out page 0 contents
-        pf.read(0, buffer);
-        PageId testPid;
-        int testHeight;
-        // Order of storage: rootPid, treeHeight
-        memcpy(&testPid, &buffer, sizeof(PageId));
-        memcpy(&testHeight, &buffer[sizeof(PageId)], sizeof(int));
+        printf("rootPid right after initial insert(): %d\n", getRootPid());
+        // pf.read(0, buffer);
+        // PageId testPid;
+        // int testHeight;
+        // // Order of storage: rootPid, treeHeight
+        // memcpy(&testPid, &buffer, sizeof(PageId));
+        // memcpy(&testHeight, &buffer[sizeof(PageId)], sizeof(int));
 
         // DEBUG
         // printf("Initial root PageId should be 1: %d\n", testPid);
@@ -656,7 +661,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     visited.push(cur_pid);
 
     // DEBUG: 
-    // printf("cur_pid of find(): %d\n", cur_pid);
+    printf("cur_pid of find(): %d\n", cur_pid);
 
 	// If we are at the leaf node
 	if (cur_tree_height == 0) {
@@ -703,7 +708,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	// look for the searchKey, set cursor.eid
     	rc = leafnode.locate(searchKey, cursor.eid);
     	if (rc < 0) {
-            printf("ERROR: the no such record occurred in leafnode.locate()\n");
+            printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
     		return rc;
     	}
 
@@ -777,6 +782,8 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
         // TODO: Double-check this function's last arg, 
         // which is now getting rootPid via helper
         std::stack<PageId> ignoreThis;
+        // DEBUG
+        printf("rootPid just before find() invocation [Line %d]: %d\n", __LINE__, getRootPid());
         return find(searchKey, cursor, getTreeHeight(), getRootPid(), ignoreThis);
     }
 

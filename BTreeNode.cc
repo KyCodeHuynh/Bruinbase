@@ -265,6 +265,12 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     while (searchPoint < (offset + (getKeyCount() * sizeof(LeafEntry)))) {
         memcpy(&entry, &buffer[searchPoint], sizeof(LeafEntry));
 
+        // DEBUG
+        if (searchKey == 4) {
+            printf("Inside of BTLeafNode::locate()\n");
+            printf("entry.key: %d\n", entry.key);
+            printf("searchKey arg: %d\n", searchKey);
+        }
         // Found the entry
         if (entry.key == searchKey) {
             eid = searchIndex;
@@ -290,7 +296,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 
     // Hit end of node without finding searchKey
     // Set eid to index of highest item
-    eid = getKeyCount() -1; 
+    eid = getKeyCount() - 1; 
     return RC_NO_SUCH_RECORD; 
 }
 
