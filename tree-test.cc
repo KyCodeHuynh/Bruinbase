@@ -65,7 +65,7 @@ int main()
     }
 
     // Write this only once and break only once: after all tests have run
-    if (rc1 < 0 || rc2 < 0 || rc3 < 0 || rc4 < 0 || rc5 < 5) {
+    if (rc1 < 0 || rc2 < 0 || rc3 < 0 || rc4 < 0 || rc5 < 0) {
         // See: https://stackoverflow.com/questions/18840422/do-negative-numbers-return-false-in-c-c
         // "A zero value, null pointer value, or null member pointer value is
         // converted to false; any other value is converted to true."

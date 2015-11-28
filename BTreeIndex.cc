@@ -26,7 +26,9 @@ BTreeIndex::BTreeIndex()
     // Cannot yet assume that PageFile is loaded;
     // open() handles that. 
 
-    isInitialized = false;
+    // CRYSTAL 
+    // Will be unnecessary after setInit() is fully implemented
+    // isInitialized = false;
 
 	// // Default: rootPid is -1, which mean no node has been created
  //    rootPid = -1;
@@ -128,6 +130,57 @@ RC BTreeIndex::setTreeHeight(int newHeight)
     return 0;
 }
 
+/**
+* Return the init status of the tree, stored in page 0 of our internal PageFile
+* Assumes that the PageFile has already been loaded.
+* -1 means not initialized, 0 means empty, 1 means at least 1 node in the tree
+*/
+int BTreeIndex::getInit() const
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, init status]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int status = -1; 
+    // PageId and treeHeight is stored first
+    int offset = sizeof(PageId) + sizeof(int); 
+
+    // C functions are not at all intuitive to read
+    memcpy(&status, &buffer[offset], sizeof(int));
+    return status;
+}
+
+
+/**
+* Set init value of the tree, stored in page 0
+* Assumes that the PageFile has already been loaded.
+* This is meant to indicate whether it has been initialized or not - or just empty.
+* @param newRootPid[IN] should be -1 if not initialized, 0 if empty, 1 if initialized
+* @return error code. 0 if no error.
+*/
+RC BTreeIndex::setInit(int status)
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, status]
+    char buffer[1024]; 
+    int rc = pf.read(0, buffer); 
+    if (rc < 0) {
+        return rc;
+    }
+
+    int offset = sizeof(PageId) + sizeof(int);
+    memcpy(&buffer[offset], &status, sizeof(int));
+
+    // Don't forget to write the change back to disk!
+    pf.write(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    return 0;
+}
 
 /**
 * Return the rootPid of the tree, stored in page 0 of our internal PageFile
@@ -137,9 +190,9 @@ PageId BTreeIndex::getRootPid() const
 {
     // PageFile does not yet have contents
     // or is not yet loaded, so no actual root yet
-    if (! isInitialized) {
+    if (getInit() <= 0) {
         // DEBUG
-        printf("getRootPid() reports not yet initialized. Give 0 by default.\n");
+        printf("getRootPid() reports not yet initialized or its empty. Give 0 by default.\n");
         return 0;
     }
     // STORAGE in Page 0: [rootPid, treeHeight]
@@ -402,7 +455,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // to allow a consistent buffer format for nodes
     // in all remaining pages. The first node of the 
     // tree will be found in page 1. 
-    if (isInitialized == false) {
+    // getInit() == -1 means it's not initialized, getInit() == 0 means it's empty
+    if (getInit() <= 0) {
 
         // Initial rootPid and treeHeight are both 0
         char buffer[1024];
@@ -422,9 +476,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
         // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
-        isInitialized = true;
-
-        // printf("got initial stuff down\n");
+        // CRYSTAL 
+        // Setting Init
+        setInit(1);
 
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now

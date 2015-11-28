@@ -14,12 +14,15 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
+// CRYSTAL - I feel like we need to include this header file
+#include "BTreeIndex.h"
 
 using namespace std;
 
 // external functions and variables for load file and sql command parsing 
 extern FILE* sqlin;
 int sqlparse(void);
+BTreeIndex indexTree;
 
 
 RC SqlEngine::run(FILE* commandline)
@@ -143,19 +146,55 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     // Parse that line/tuple using SqlEngine::parseLoadLine()   
     // Insert the parsed tuple into the RecordFile
 
-    // Automatically creates file if it does not exist; open in writing mode
+    // CRYSTAL
     RecordFile recFile;
-    RC retCode = 0;
-    if ((retCode = recFile.open(table + ".tbl", 'w')) < 0) {
+    BTreeIndex indexFile;
+
+    RC retRecCode = 0;
+    RC retIndexCode = 0;
+
+    // Make sure to create recordFile
+    if ((retRecCode = recFile.open(table + ".tbl", 'w')) < 0) {
         fprintf(stderr, "Could not open/create file %s.tbl for writing\n", table.c_str());
-        return retCode;
+        return retRecCode;
     }
-    else {
-        // Open loadfile for reading only; ofstream does output; fstream does both
-        // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
-        string line;
-        ifstream load; 
-        load.open(loadfile.c_str( ));
+
+    // Open loadfile for reading only; ofstream does output; fstream does both
+    // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
+    string line;
+    ifstream load; 
+    load.open(loadfile.c_str( ));
+
+    // CRYSTAL
+    // If index is true, make a BTreeIndex
+    // I was going to try and integrate both methods, but that would add extra logic in the while() statement
+    if (index == true) {
+        if (retIndexCode = indexFile.open(table + ".idx", 'w') < 0) {    
+            fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
+            return retIndexCode;        
+        }
+
+        if (load.is_open()) {
+            int key = -1; 
+            string value = "";
+            RecordId rid;
+            rid.pid = -1; // PageID
+            rid.sid = -1; // SlotID
+
+            // Load a line into 'line'
+            while(getline(load, line)) {
+                // Parse 'line', load it into the RecordFile, add to BTreeIndex
+                parseLoadLine(line, key, value);
+                recFile.append(key, value, rid);
+                indexFile.insert(key, rid);
+            }
+        } else {
+            fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
+            return RC_FILE_OPEN_FAILED;
+        }
+
+        indexFile.close(); 
+    } else {
         if (load.is_open()) {
             int key = -1; 
             string value = "";
@@ -169,16 +208,14 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 parseLoadLine(line, key, value);
                 recFile.append(key, value, rid);
             }
-        }
-        else {
+        } else {
             fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
             return RC_FILE_OPEN_FAILED;
         }
-
-        load.close();
-        recFile.close();
     }
 
+    load.close();
+    recFile.close();
     return 0;
 }
 

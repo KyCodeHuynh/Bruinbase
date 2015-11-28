@@ -144,6 +144,21 @@ class BTreeIndex {
   */
   RC setRootPid(int newRootPid);
 
+  /**
+  * Return the init status of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  * -1 means not initialized, 0 means empty, 1 means at least 1 node in the tree
+  */
+  int getInit() const;
+
+  /**
+  * Set init value of the tree, stored in page 0
+  * Assumes that the PageFile has already been loaded.
+  * This is meant to indicate whether it has been initialized or not - or just empty.
+  * @param newRootPid[IN] should be -1 if not initialized, 0 if empty, 1 if initialized
+  * @return error code. 0 if no error.
+  */
+  RC setInit(int status);
 
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
