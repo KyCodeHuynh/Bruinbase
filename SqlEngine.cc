@@ -118,8 +118,8 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         }
 
         // move to the next tuple
-next_tuple:
-        ++rid;
+        next_tuple:
+                ++rid;
     }
 
     // print matching tuple count if "select count(*)"
@@ -129,17 +129,13 @@ next_tuple:
     rc = 0;
 
     // close the table file and return
-exit_select:
-    rf.close();
-    return rc;
+    exit_select:
+        rf.close();
+        return rc;
 }
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
-    // TODO: Implement! 
-
-    // Outline of plan of attack: 
-    //
     // Use I/O libraries to open() loadfile and get a resource handle for it.
     // Open RecordFile "table".tbl if it already exists, or create it if not.
     // Get a line/tuple from loadfile using I/O libraries
@@ -166,20 +162,21 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     load.open(loadfile.c_str( ));
 
     // DEBUG
-    fprintf(stderr, "We past opening the loadfile\n");
+    fprintf(stderr, "DEBUG: We're past opening the loadfile\n");
 
     // CRYSTAL
     // If index is true, make a BTreeIndex in addition to the RecordFile
     // I was going to try and integrate both methods, but that would add extra logic in the while() statement
     if (index == true) {
         // DEBUG
-        fprintf(stderr, "Desire to make index is TRUE!\n");
+        fprintf(stderr, "DEBUG: Desire to make index is TRUE!\n");
         if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {    
             fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
             return retIndexCode;        
         }
 
         if (load.is_open()) {
+            fprintf(stderr, "DEBUG: Loadfile stream is open!\n");
             int key = -1; 
             string value = "";
             RecordId rid;
@@ -190,8 +187,10 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
             while(getline(load, line)) {
                 // Parse 'line', load it into the RecordFile, add to BTreeIndex
                 parseLoadLine(line, key, value);
+                // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
-                indexFile.insert(key, rid);
+                // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
+                // indexFile.insert(key, rid);
             }
         } 
         else {
@@ -205,7 +204,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     // It's only optional on whether or not we create a BTreeIndex
     else {
         // DEBUG: 
-        fprintf(stderr, "Desire to make index is FALSE!\n");
+        fprintf(stderr, "DEBUG: Desire to make index is FALSE!\n");
         if (load.is_open()) {
             int key = -1; 
             string value = "";
@@ -219,7 +218,8 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 parseLoadLine(line, key, value);
                 recFile.append(key, value, rid);
             }
-        } else {
+        } 
+        else {
             fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
             return RC_FILE_OPEN_FAILED;
         }
