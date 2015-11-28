@@ -119,7 +119,12 @@ RC BTreeIndex::setTreeHeight(int newHeight)
     // C functions are not at all intuitive to read
     memcpy(&buffer[offset], &newHeight, sizeof(int));
 
-    // TODO: Error cases and handling? 
+    // Don't forget to write back to disk!
+    pf.write(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
     return 0;
 }
 
@@ -180,7 +185,12 @@ RC BTreeIndex::setRootPid(int newRootPid)
     // C functions are not at all intuitive to read
     memcpy(&buffer[offset], &newRootPid, sizeof(PageId));
 
-    // TODO: Error cases and handling? 
+    // Don't forget to write the change back to disk!
+    pf.write(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
     return 0;
 }
 
@@ -417,6 +427,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         BTLeafNode leaf_root;
         rc = leaf_root.insert(key, rid);
         if (rc < 0) {
+            // DEBUG
+            printf("Empty tree case leaf_root.insert() failed!\n");
             return rc;
         }
 
@@ -425,6 +437,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
         // Make sure we write to page 1
         rc = leaf_root.write(1, pf);
+        // DEBUG
+        // printf("Wrote leaf_root to page 1. endPid() should now return 2: %d\n", pf.endPid());
         if (rc < 0) {
             return rc;
         }
@@ -444,6 +458,46 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         setRootPid(1);
         setTreeHeight(0);
 
+        // DEBUG: Print out page 0 contents
+        pf.read(0, buffer);
+        PageId testPid;
+        int testHeight;
+        // Order of storage: rootPid, treeHeight
+        memcpy(&testPid, &buffer, sizeof(PageId));
+        memcpy(&testHeight, &buffer[sizeof(PageId)], sizeof(int));
+
+        // DEBUG
+        // printf("Initial root PageId should be 1: %d\n", testPid);
+        // printf("Initial tree height should be 0: %d\n", testHeight);
+
+        // DEBUG: print page 1 contents
+        // typedef struct LeafEntry {
+        //     int key;
+        //     RecordId rid;
+        // } LeafEntry;    
+
+        // pf.read(1, buffer);
+        // int keyCount;
+        // PageId nextPage;
+        // memcpy(&keyCount, &buffer, sizeof(int));
+        // memcpy(&nextPage, &buffer[sizeof(int)], sizeof(PageId));
+        // printf("\nRight after initial insert()\n");
+        // printf("Key count in buffer: %d\n", keyCount);
+        // printf("Next PageId in buffer: %d\n", nextPage);
+
+        // LeafEntry inserted; 
+        // int offset = sizeof(int) + sizeof(PageId);
+        // int x = 0;
+        // printf("Entries in buffer: \n");
+        // while(x < keyCount) {
+        //     memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
+        //     printf("key: %d\n", inserted.key);
+        //     printf("pid: %d\n", inserted.rid.pid);
+        //     printf("sid: %d\n", inserted.rid.sid);
+        //     offset = offset + sizeof(LeafEntry);
+        //     x++;
+        // }
+        
         // printf("DONE WITH INSERT IN INDEX\n");
 
         return 0;
@@ -601,6 +655,9 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     // Update stack of visited nodes
     visited.push(cur_pid);
 
+    // DEBUG: 
+    // printf("cur_pid of find(): %d\n", cur_pid);
+
 	// If we are at the leaf node
 	if (cur_tree_height == 0) {
 		// Try to get the node that the pid is pointing to
@@ -613,37 +670,34 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	}
 
         // DEBUG
-        printf("KEY COUNT inside of find(): %d\n", leafnode.getKeyCount());
+        // printf("\nKEY COUNT inside of find(): %d\n", leafnode.getKeyCount());
 
-        typedef struct LeafEntry {
-            int key;
-            RecordId rid;
-        } LeafEntry;    
+        // typedef struct LeafEntry {
+        //     int key;
+        //     RecordId rid;
+        // } LeafEntry;    
 
-        int x = 0;
+        // int x = 0;
 
-        char buffer[1024];
-        // Need to read in PageFile's contents from our specific page
-        // AFTER we've updated it with the latest, or else we won't 
-        // be able to see the contents of the updated node
-        leafnode.write(0, pf);
-        pf.read(0, buffer);
+        // // Inspect contents of page 1
+        // char buffer[1024];
+        // pf.read(1, buffer);
 
-        PageId next_pageid;
-        memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
-        printf("next page id: %d\n", next_pageid);
+        // PageId next_pageid;
+        // memcpy(&next_pageid, &buffer[sizeof(int)], sizeof(PageId));
+        // printf("next page id: %d\n", next_pageid);
 
-        LeafEntry inserted; 
-        int offset = sizeof(int) + sizeof(PageId);
+        // LeafEntry inserted; 
+        // int offset = sizeof(int) + sizeof(PageId);
 
-        while(x < leafnode.getKeyCount()) {
-            memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
-            printf("key: %d\n", inserted.key);
-            printf("pid: %d\n", inserted.rid.pid);
-            printf("sid: %d\n", inserted.rid.sid);
-            offset = offset + sizeof(LeafEntry);
-            x++;
-        }
+        // while(x < leafnode.getKeyCount()) {
+        //     memcpy(&inserted, &buffer[offset], sizeof(LeafEntry));
+        //     printf("key: %d\n", inserted.key);
+        //     printf("pid: %d\n", inserted.rid.pid);
+        //     printf("sid: %d\n", inserted.rid.sid);
+        //     offset = offset + sizeof(LeafEntry);
+        //     x++;
+        // }
 
 
     	// look for the searchKey, set cursor.eid
