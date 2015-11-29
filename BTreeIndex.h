@@ -90,6 +90,20 @@ class BTreeIndex {
    */
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
 
+  // TODO: PUT THESE TWO FUNCTIONS BACK TO PRIVATE
+
+  /**
+  * Return the height of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  int getTreeHeight() const;
+
+  /**
+  * Return the rootPid of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  PageId getRootPid() const;
+
  private:
 
   /**
@@ -116,11 +130,7 @@ class BTreeIndex {
   */
   RC helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId>& visited);
 
-  /**
-  * Return the height of the tree, stored in page 0 of our internal PageFile
-  * Assumes that the PageFile has already been loaded.
-  */
-  int getTreeHeight() const;
+
 
   /**
   * Set new height of the tree, stored in page 0
@@ -130,11 +140,7 @@ class BTreeIndex {
   */
   RC setTreeHeight(int newHeight);
 
-  /**
-  * Return the rootPid of the tree, stored in page 0 of our internal PageFile
-  * Assumes that the PageFile has already been loaded.
-  */
-  PageId getRootPid() const;
+
 
   /**
   * Set new rootPid of the tree, stored in page 0

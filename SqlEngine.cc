@@ -190,7 +190,10 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
                 // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
-                // indexFile.insert(key, rid);
+                indexFile.insert(key, rid);
+                fprintf(stderr, "DEBUG: \n rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
+                fprintf(stderr, "DEBUG: Tree Height: %d\n", indexFile.getTreeHeight());
+                fprintf(stderr, "DEBUG: Root Pid: %d\n", indexFile.getRootPid());
             }
         } 
         else {
@@ -216,7 +219,9 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
             while(getline(load, line)) {
                 // Parse 'line' and load it into the RecordFile
                 parseLoadLine(line, key, value);
+                // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
+                fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
             }
         } 
         else {

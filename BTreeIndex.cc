@@ -483,6 +483,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
         BTLeafNode leaf_root;
+        fprintf(stderr, "DEBUG: Created first leaf node: %d\n", key);
         rc = leaf_root.insert(key, rid);
         if (rc < 0) {
             // DEBUG
@@ -570,6 +571,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     else if (getTreeHeight() == 0) {
         // Get leaf node
         BTLeafNode leaf_root; 
+        fprintf(stderr, "DEBUG: Reached root for key: %d\n", key);
         int rc = leaf_root.read(getRootPid(), pf);
         if (rc < 0) {
             return rc;
@@ -623,6 +625,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // No need to have the new root be the first page,
             // which would be an expensive rearrangement. 
             BTNonLeafNode new_root;
+            fprintf(stderr, "DEBUG: Created non leaf node: %d\n", siblingKey);
 
             // insertAndSplit() lets us know the key that should be stored in parent
             // getRootPid() here gets us the PageId for leaf_root, which is now left child
@@ -659,6 +662,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         if (rc < 0) {
             return rc;
         }
+        fprintf(stderr, "DEBUG: Inserted into an already-made node: %d\n", key);
     }
 	// Crystal: I think we need a recursive function
 	// 			We need to locate where the node is supposed to go
@@ -770,6 +774,12 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
         // printf("FOUND KEY: %d\n", searchKey);
         // printf("FOUND PID: %d\n", cur_pid);
         // printf("FOUND EID: %d\n", cursor.eid);
+        // DEBUG
+        int size = visited.size();
+        fprintf(stderr, "DEBUG: visited size: %d\n", size);
+        for (int i = 0; i < visited.size(); i++) {
+            fprintf(stderr, "DEBUG: Visited: %d\n", visited.top());          
+        }
 
         // Output PageId of located entry
         // cursor.eid is already set by BTLeafNode::locate() above
