@@ -75,9 +75,10 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     
     // NOTE: The first sizeof(int) + sizeof(PageId) bytes are reserved
     // for the key count and next sibling PageId
+    // TODO: Check if full when this size + sizeof(newEntry)
     int offset = sizeof(int) + sizeof(PageId);
     int numKeys = getKeyCount();
-    int bytesUsed = offset + (numKeys * sizeof(LeafEntry));
+    int bytesUsed = offset + (numKeys * sizeof(LeafEntry)) + sizeof(newEntry);
 
     // Check if node full, i.e., we don't have space
     // for another LeafEntry. 
@@ -423,7 +424,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
     
     int offset = sizeof(int) + sizeof(PageId);
     int numKeys = getKeyCount();
-    int bytesUsed = offset + (numKeys * sizeof(NonLeafEntry));
+    int bytesUsed = offset + (numKeys * sizeof(NonLeafEntry)) + sizeof(newEntry);
 
     // Check if node full, i.e., we don't have space
     if ((PageFile::PAGE_SIZE - bytesUsed) < 0) {
