@@ -42,6 +42,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 {
     RecordFile rf;   // RecordFile containing the table
     RecordId   rid;  // record cursor for table scanning
+    BTreeIndex indexTree; // Index file data for B+ tree
 
     RC     rc;
     int    key;     
@@ -54,6 +55,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
         return rc;
     }
+
+    // Open the index file 
+    if ((rc = indexTree.open(table + ".idx", 'r')) < 0) {
+        fprintf(stderr, "Error: index file %s does not exist\n", table.c_str());
+        return rc;
+    }
+
+    // TODO: Set-up index use
 
     // scan the table file from the beginning
     rid.pid = rid.sid = 0;
