@@ -57,8 +57,9 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     }
 
     // Open the index file
+    // fprintf(stderr, "DEBUG: Table name passed-in: %s\n", table.c_str());
     if ((rc = indexTree.open(table + ".idx", 'r')) < 0) {
-        fprintf(stderr, "Error: index file %s does not exist\n", table.c_str());
+        fprintf(stderr, "Error: IndexFile %s.idx does not exist\n", table.c_str());
         return rc;
     }
 
@@ -183,6 +184,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     if (index == true) {
         // DEBUG
         // fprintf(stderr, "DEBUG: Desire to make index is TRUE!\n");
+        // fprintf(stderr, "DEBUG: able name in load(): %s\n", table.c_str());
         if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {
             fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
             return retIndexCode;
