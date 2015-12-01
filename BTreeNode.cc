@@ -262,6 +262,13 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     int searchPoint = offset; 
     int searchIndex = 0;
 
+    // DEBUG
+    PageId my_pid;
+    memcpy(&my_pid, &buffer[sizeof(int)], sizeof(PageId));
+    fprintf(stderr, "looking at node with pid: %d\n", my_pid);
+
+
+    fprintf(stderr, "NOW LOOKING IN LEAF NODE FOR : %d\n key count: %d\n", searchKey, getKeyCount());
     while (searchPoint < (offset + (getKeyCount() * sizeof(LeafEntry)))) {
         memcpy(&entry, &buffer[searchPoint], sizeof(LeafEntry));
 
@@ -272,6 +279,8 @@ RC BTLeafNode::locate(int searchKey, int& eid)
         //     printf("searchKey arg: %d\n", searchKey);
         // }
         
+        fprintf(stderr, "looking at key: %d\n", entry.key);
+
         // Found the entry
         if (entry.key == searchKey) {
             eid = searchIndex;
@@ -285,7 +294,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
         // Example: 1 3 5 7 8
         // locate() with searchKey of 3 = 1
         // locate() with searchKey of 4 = 2
-        if (searchKey < entry.key) {
+        if (entry.key > searchKey) {
             eid = searchIndex;
             return RC_NO_SUCH_RECORD;
         }

@@ -186,6 +186,8 @@ int locateTest(const std::string& filename)
     cursor.pid = -1;
     cursor.eid = -1;
 
+    printf("DEBUG: tree height: %d \n", indexTree.getTreeHeight());
+
     rc = indexTree.locate(4, cursor);
     if (rc < 0) {
         // DEBUG

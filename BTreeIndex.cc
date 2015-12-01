@@ -728,14 +728,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate) {
 
   printf("DEBUG: adding to visited: %d\n", cur_pid);
+  printf("DEBUG: treeHeight: %d\n", cur_tree_height);
   // Update stack of visited nodes
   visited.push(cur_pid);
 
 	// If we are at the leaf node
 	if (cur_tree_height == 0) {
+
 		// Try to get the node that the pid is pointing to
 		BTLeafNode leafnode;
 		int rc = leafnode.read(cur_pid, pf);
+        printf("DEBUG: leafnode is from: %d\n", cur_pid);
 		if (rc < 0) {
             // DEBUG
             // printf("ERROR: the leafnode.read() failed in find()\n");
@@ -783,6 +786,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 
     	// look for the searchKey, set cursor.eid
       if (isLocate) {
+          fprintf(stderr, "isLocate searching for key: %d\n", searchKey);
           rc = leafnode.locate(searchKey, cursor.eid);
           if (rc < 0) {
               printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
@@ -819,11 +823,15 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
         // locateChildPtr() gives the child pointer to follow,
         // given a searchKey. We do this to traverse the tree.
 		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
+        fprintf(stderr, "DEBUG: new pid to follow: %d\n", new_pid);        
+
 		if (rc < 0) {
             // DEBUG
             printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
 			return rc;
 		}
+
+        printf("DEBUG: ending current tree height: %d\n", cur_tree_height - 1);
 
 		return find(searchKey, cursor, cur_tree_height - 1, new_pid, visited, isLocate);
 	}
@@ -860,8 +868,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
       // DEBUG
       // printf("ERROR: No such record happened at treeHeight check\n");
       return RC_NO_SUCH_RECORD;
-  }
-    else {
+  } else {
         // find() is our recursive helper above,
         // and implements the standard B+ tree search algorithm
         // TODO: Double-check this function's last arg,
