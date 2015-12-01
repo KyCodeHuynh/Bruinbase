@@ -230,7 +230,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 parseLoadLine(line, key, value);
                 // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
-                fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
+                // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
             }
         } 
         else {
