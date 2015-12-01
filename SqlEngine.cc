@@ -38,12 +38,14 @@ RC SqlEngine::run(FILE* commandline)
     return 0;
 }
 
+// attr is a number that notes what 
 RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 {
     RecordFile rf;   // RecordFile containing the table
     RecordId   rid;  // record cursor for table scanning
     BTreeIndex indexTree; // Index file data for B+ tree
 
+    // TODO: Remove any unused variables
     RC     rc;
     int    key;
     string value;
@@ -63,7 +65,46 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         return rc;
     }
 
-    // TODO: Set-up index use
+    // Bruinbase suppports SELECT on key, value, *, COUNT(*)
+    // With WHERE on key/value and using <, <=, >, >=, =, <>
+    //
+    // We'll iterate through the conditions and use index when possible
+    // Sometimes, we may have to read data from the RecordFile, which 
+    // requires a page read. We want to minimize those. 
+
+    // TODO: What are we selecting? key, value, *, or COUNT(*)?
+
+    // Error: attr is outside of its allowable range
+    if (attr < 1 || attr > 4) {
+        fprintf(stderr, "Error: SqlEngine::load() has an invalid 'attr' argument");
+    }
+
+    // TODO: attr: 1-3; SELECT key, value, *
+
+    // SELECT COUNT(*) 
+    if (attr == 4) {
+
+    }
+    
+
+    // Iterate through the selecting conditions
+    // and make sure all of them are satisfied
+    // for (unsigned int i = 0; i < cond.size(); i++) {
+    //     switch (cond[i].attr) {
+    //         int diff = 0;
+    //         // We're selecting on a key
+    //         case 1: 
+                
+    //             // TODO: General scheme for 
+    //             // handling arbitrary conditions
+
+    //         default: 
+    //             // TODO: Error on attr argument
+    //     }
+    // }
+
+
+    // OLD CODE
 
     // scan the table file from the beginning
     rid.pid = rid.sid = 0;
