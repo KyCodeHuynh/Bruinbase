@@ -15,23 +15,23 @@
 #include "Bruinbase.h"
 #include "PageFile.h"
 #include "RecordFile.h"
-             
+
 /**
  * The data structure to point to a particular entry at a b+tree leaf node.
- * An IndexCursor consists of pid (PageId of the leaf node) and 
+ * An IndexCursor consists of pid (PageId of the leaf node) and
  * eid (the location of the index entry inside the node).
  * IndexCursor is used for index lookup and traversal.
  */
 typedef struct {
   // PageId of the index entry
-  PageId  pid;  
+  PageId  pid;
   // The entry number inside the node
-  int     eid;  
+  int     eid;
 } IndexCursor;
 
 /**
  * Implements a B-Tree index for bruinbase.
- * 
+ *
  */
 class BTreeIndex {
  public:
@@ -51,7 +51,7 @@ class BTreeIndex {
    * @return error code. 0 if no error
    */
   RC close();
-    
+
   /**
    * Insert (key, RecordId) pair to the index.
    * @param key[IN] the key for the value inserted into the index
@@ -63,18 +63,18 @@ class BTreeIndex {
   /**
    * Run the standard B+Tree key search algorithm and identify the
    * leaf node where searchKey may exist. If an index entry with
-   * searchKey exists in the leaf node, set IndexCursor to its location 
+   * searchKey exists in the leaf node, set IndexCursor to its location
    * (i.e., IndexCursor.pid = PageId of the leaf node, and
-   * IndexCursor.eid = the searchKey index entry number.) and return 0. 
-   * If not, set IndexCursor.pid = PageId of the leaf node and 
-   * IndexCursor.eid = the index entry immediately after the largest 
-   * index key that is smaller than searchKey, and return the error 
+   * IndexCursor.eid = the searchKey index entry number.) and return 0.
+   * If not, set IndexCursor.pid = PageId of the leaf node and
+   * IndexCursor.eid = the index entry immediately after the largest
+   * index key that is smaller than searchKey, and return the error
    * code RC_NO_SUCH_RECORD.
    * Using the returned "IndexCursor", you will have to call readForward()
    * to retrieve the actual (key, rid) pair from the index.
    * @param key[IN] the key to find
-   * @param cursor[OUT] the cursor pointing to the index entry with 
-   *                    searchKey or immediately behind the largest key 
+   * @param cursor[OUT] the cursor pointing to the index entry with
+   *                    searchKey or immediately behind the largest key
    *                    smaller than searchKey.
    * @return 0 if searchKey is found. Othewise, an error code
    */
@@ -108,7 +108,7 @@ class BTreeIndex {
 
   /**
   * Recursive function to search through the nodes
-  * to find the searchKey 
+  * to find the searchKey
   * @param searchKey[IN] the key that we're looking for
   * @param cur_tree_height[IN] current tree height
   * @param cur_pid[IN] current page id of the current node
@@ -116,7 +116,7 @@ class BTreeIndex {
   * @param visited[OUT] the stack of PageId's of visited nodes
   * @return error code if error. 0 if successful.
   */
-  RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited);
+  RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate);
 
   /**
   * Recursive function to insert (key, RecordId) pairs
@@ -173,18 +173,18 @@ class BTreeIndex {
   // PageId   rootPid;    /// the PageId of the root node
   // int      treeHeight; /// the height of the tree
 
-  // PageId rootPid and int treeHeight are stored 
+  // PageId rootPid and int treeHeight are stored
   // in Page 0 of our internal PageFile.
-  // Order of storage: rootPid, treeHeight, 
+  // Order of storage: rootPid, treeHeight,
   // occupying the first sizeof(PageId) + sizeof(int) bytes
   //
-  // Get/set them through the helpers above only. 
+  // Get/set them through the helpers above only.
   // This keeps us from forgetting to update
   // the PageFile with the latest values of our class members
 
 
   /// Note that the content of the above two variables will be gone when
-  /// this class is destructed. Make sure to store the values of the two 
+  /// this class is destructed. Make sure to store the values of the two
   /// variables in disk, so that they can be reconstructed when the index
   /// is opened again later.
 };

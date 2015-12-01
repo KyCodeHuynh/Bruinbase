@@ -660,10 +660,12 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Initial curDepth is tree height, as find() should ended on a leaf node
         std::stack<PageId> visited;
         IndexCursor ignoreThis;
-        find(key, ignoreThis, getTreeHeight(), getRootPid(), visited);
+        bool isLocate = false;
+        find(key, ignoreThis, getTreeHeight(), getRootPid(), visited, isLocate);
         // DEBUG
         int size = visited.size();
         PageId first = visited.top();
+        // fprintf(stderr, "DEBUG: The first key to need helperInsert: %d\n", key);
         fprintf(stderr, "DEBUG: Find() finishes with a value of: %d\n value: %d\n", size, first);
         int curDepth = getTreeHeight();
         int insertPid = -1;
@@ -723,7 +725,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 * @param cur_tree_height[IN] current tree height
 * @param cur_pid[IN] current page id of the current node
 */
-RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited) {
+RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate) {
 
   printf("DEBUG: adding to visited: %d\n", cur_pid);
   // Update stack of visited nodes
@@ -771,12 +773,23 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
         // }
 
 
+      // find() serves two purposes: getting
+      // the actual IndexCursor (when used by locate())
+      // and getting the destination leaf node of a new key
+      // (when used by helperInsert()). We don't want an
+      // error unless find() is being used by locate(),
+      // as in the helperInsert() case, the record indeed
+      // does not exist yet, because the key has not been inserted yet!
+
     	// look for the searchKey, set cursor.eid
-    	rc = leafnode.locate(searchKey, cursor.eid);
-    	if (rc < 0) {
-            printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
-    		return rc;
-    	}
+      if (isLocate) {
+          rc = leafnode.locate(searchKey, cursor.eid);
+          if (rc < 0) {
+              printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
+              return rc;
+      	  }
+      }
+
 
         // DEBUG
         // printf("FOUND KEY: %d\n", searchKey);
@@ -812,7 +825,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 			return rc;
 		}
 
-		return find(searchKey, cursor, cur_tree_height - 1, new_pid, visited);
+		return find(searchKey, cursor, cur_tree_height - 1, new_pid, visited, isLocate);
 	}
 	// Shouldn't get to this point, but if for some reason, the height is 0
 	else {
@@ -854,9 +867,11 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
         // TODO: Double-check this function's last arg,
         // which is now getting rootPid via helper
         std::stack<PageId> ignoreThis;
+        // Want error if searchKey not found
+        bool isLocate = true;
         // DEBUG
         // printf("rootPid just before find() invocation [Line %d]: %d\n", __LINE__, getRootPid());
-        return find(searchKey, cursor, getTreeHeight(), getRootPid(), ignoreThis);
+        return find(searchKey, cursor, getTreeHeight(), getRootPid(), ignoreThis, isLocate);
     }
 
     return 0;
