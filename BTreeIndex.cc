@@ -821,7 +821,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
 		if (rc < 0) {
             // DEBUG
-            // printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
+            printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
 			return rc;
 		}
 
@@ -830,7 +830,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 	// Shouldn't get to this point, but if for some reason, the height is 0
 	else {
         // DEBUG
-        // printf("ERROR: No such record happened as else-case of find()\n");
+        printf("ERROR: No such record happened as else-case of find()\n");
 		return RC_NO_SUCH_RECORD;
 	}
 }

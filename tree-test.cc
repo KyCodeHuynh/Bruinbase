@@ -149,17 +149,17 @@ int insertTest(const std::string& filename)
 
     // TODO: Re-enable this
     // Case 2: Cause root node to overflow
-    // for (int i = 15; i < 250; i++) {
-    //     // Lets us check locate() easily later
-    //     // For actual data, we'll just map
-    //     // them to different keys
-    //     manyRID.pid = i;
-    //     manyRID.sid = i + 1;
-    //     rc = indexTree.insert(i, manyRID);
-    //     if (rc < 0) {
-    //         return rc;
-    //     }
-    // }
+    for (int i = 15; i < 250; i++) {
+        // Lets us check locate() easily later
+        // For actual data, we'll just map
+        // them to different keys
+        manyRID.pid = i;
+        manyRID.sid = i + 1;
+        rc = indexTree.insert(i, manyRID);
+        if (rc < 0) {
+            return rc;
+        }
+    }
 
     rc = indexTree.close();
     if (rc < 0) {
@@ -189,18 +189,17 @@ int locateTest(const std::string& filename)
     rc = indexTree.locate(4, cursor);
     if (rc < 0) {
         // DEBUG
-        printf("ERROR on locate(4): %d\n", rc);
+        printf("ERROR on locate(4) inside of locateTest(): %d\n", rc);
         assert(0);
         return rc;
     }
 
     rc = indexTree.locate(10, cursor);
     if (rc < 0) {
+        printf("ERROR on locate(10) inside of locateTest(): %d\n", rc);
         assert(0);
         return rc;
     }
-
-    // TODO: Try locating the big i and i + 1 insertion
 
     rc = indexTree.close();
     if (rc < 0) {
