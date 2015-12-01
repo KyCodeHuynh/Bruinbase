@@ -173,7 +173,7 @@ void nonLeafNodeTest(PageFile nf) {
     // printf("I'm going to re-initialize the node and see what happens\n");
     // printf("NEW ANSWER:\n");
 
-    pid1 = 55;
+    pid1 = -2;
     pid2 = 12;
     key1 = 5;
 
@@ -227,9 +227,10 @@ void nonLeafNodeTest(PageFile nf) {
     // printNode(&nonleafNode, &nf);
     // printf("key count: %d\n", nonleafNode.getKeyCount());
 
-    //TESTING: locateChildPtr
-    // nonleafNode.setKeyCount(6);
-    // printf("CRYSTAL TESTING locateChildPtr \n\n\n\n\n");
+    // TESTING: locateChildPtr
+    // DEBUG
+    // // nonleafNode.setKeyCount(6);
+    // printf("DEBUG: CRYSTAL TESTING locateChildPtr \n\n\n\n\n");
     // printNode(&nonleafNode, &nf);
 
     // We should now have: -1, 10, 12, 15, 42, 43, .., 107
@@ -243,12 +244,12 @@ void nonLeafNodeTest(PageFile nf) {
     assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
     assert(pid == 12);
 
-    // Greater than all of current keys, so return rightmost
+    // less than all of current keys, so return leftmost
     pid = -1; 
-    searchKey = 109;
+    searchKey = -3;
     // printNode(&nonleafNode, &nf);
     assert(nonleafNode.locateChildPtr(searchKey, pid) == 0);
-    assert(pid == 85);
+    assert(pid == -2);
 
     pid = -1; 
     searchKey = 106;
@@ -472,7 +473,6 @@ int main()
     eid = -1; 
     searchKey = 10; 
     int rc = leafNode.locate(searchKey, eid);
-    printf("DEBUG: %d\n", rc);
     // assert(leafNode.locate(searchKey, eid) == 0);
     assert(eid == 1); 
 

@@ -483,7 +483,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Create leaf node and insert into page 1,
         // as no nodes at all existed until now
         BTLeafNode leaf_root;
-        fprintf(stderr, "DEBUG: Created first leaf node: %d\n", key);
+        // fprintf(stderr, "DEBUG: Created first leaf node: %d\n", key);
         rc = leaf_root.insert(key, rid);
         if (rc < 0) {
             // DEBUG
@@ -571,7 +571,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     else if (getTreeHeight() == 0) {
         // Get leaf node
         BTLeafNode leaf_root;
-        fprintf(stderr, "DEBUG: Reached root for key: %d\n", key);
         int rc = leaf_root.read(getRootPid(), pf);
         if (rc < 0) {
             return rc;
@@ -600,7 +599,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // using BTNonLeafNode::initializeRoot()
         if (rc == RC_NODE_FULL) {
             // These will be filled out by insertAndSplit()
-            fprintf(stderr, "DEBUG: Root is full - insertandSplit: %d\n", key);
+            // fprintf(stderr, "DEBUG: Root is full - insertandSplit: %d\n", key);
             BTLeafNode sibling;
             int siblingKey;
             leaf_root.insertAndSplit(key, rid, sibling, siblingKey);
@@ -608,14 +607,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // Write out sibling to a new page
             int siblingPid = pf.endPid();
             rc = sibling.write(siblingPid, pf);
-            fprintf(stderr, "DEBUG: sibling node (right) now assigned to: %d\n", siblingPid);
+            // fprintf(stderr, "DEBUG: sibling node (right) now assigned to: %d\n", siblingPid);
             if (rc < 0) {
                 return rc;
             }
 
             // Update current leaf_root
             rc = leaf_root.write(getRootPid(), pf);
-            fprintf(stderr, "DEBUG: original node now assigned to: %d\n", getRootPid());
+            // fprintf(stderr, "DEBUG: original node now assigned to: %d\n", getRootPid());
             if (rc < 0) {
                 return rc;
             }
@@ -628,15 +627,15 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // No need to have the new root be the first page,
             // which would be an expensive rearrangement.
             BTNonLeafNode new_root;
-            fprintf(stderr, "DEBUG: Created non leaf node: %d\n", siblingKey);
+            // fprintf(stderr, "DEBUG: Created non leaf node: %d\n", siblingKey);
 
             // insertAndSplit() lets us know the key that should be stored in parent
             // getRootPid() here gets us the PageId for leaf_root, which is now left child
             rc = new_root.initializeRoot(getRootPid(), siblingKey, siblingPid);
-            fprintf(stderr, "DEBUG: initialized root with: \n root-pid = %d \n sibling key = %d \n sibling Pid = %d \n", getRootPid(), siblingKey, siblingPid);
+            // fprintf(stderr, "DEBUG: initialized root with: \n root-pid = %d \n sibling key = %d \n sibling Pid = %d \n", getRootPid(), siblingKey, siblingPid);
             PageId rootPid = pf.endPid();
             rc = new_root.write(rootPid, pf);
-            fprintf(stderr, "DEBUG: New root is at pid: %d\n", rootPid);
+            // fprintf(stderr, "DEBUG: New root is at pid: %d\n", rootPid);
             if (rc < 0) {
                 return rc;
             }
@@ -666,14 +665,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         int size = visited.size();
         PageId first = visited.top();
         // fprintf(stderr, "DEBUG: The first key to need helperInsert: %d\n", key);
-        fprintf(stderr, "DEBUG: Find() finishes with a value of: %d\n value: %d\n", size, first);
+        // fprintf(stderr, "DEBUG: Find() finishes with a value of: %d\n value: %d\n", size, first);
         int curDepth = getTreeHeight();
         int insertPid = -1;
         int rc = helperInsert(curDepth, key, rid, insertPid, visited);
         if (rc < 0) {
             return rc;
         }
-        fprintf(stderr, "DEBUG: Inserted into an already-made node: %d\n", key);
+        // fprintf(stderr, "DEBUG: Inserted into an already-made node: %d\n", key);
     }
 	// Crystal: I think we need a recursive function
 	// 			We need to locate where the node is supposed to go
@@ -727,8 +726,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 */
 RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate) {
 
-  printf("DEBUG: adding to visited: %d\n", cur_pid);
-  printf("DEBUG: treeHeight: %d\n", cur_tree_height);
   // Update stack of visited nodes
   visited.push(cur_pid);
 
@@ -738,7 +735,6 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 		// Try to get the node that the pid is pointing to
 		BTLeafNode leafnode;
 		int rc = leafnode.read(cur_pid, pf);
-        printf("DEBUG: leafnode is from: %d\n", cur_pid);
 		if (rc < 0) {
             // DEBUG
             // printf("ERROR: the leafnode.read() failed in find()\n");
@@ -747,7 +743,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 
         // DEBUG
         // printf("\nKEY COUNT inside of find(): %d\n", leafnode.getKeyCount());
-
+        // DEBUG
         // typedef struct LeafEntry {
         //     int key;
         //     RecordId rid;
@@ -786,7 +782,6 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 
     	// look for the searchKey, set cursor.eid
       if (isLocate) {
-          fprintf(stderr, "isLocate searching for key: %d\n", searchKey);
           rc = leafnode.locate(searchKey, cursor.eid);
           if (rc < 0) {
               printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
@@ -794,17 +789,12 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
       	  }
       }
 
-
         // DEBUG
-        // printf("FOUND KEY: %d\n", searchKey);
-        // printf("FOUND PID: %d\n", cur_pid);
-        // printf("FOUND EID: %d\n", cursor.eid);
-        // DEBUG
-        int size = visited.size();
-        fprintf(stderr, "DEBUG: visited size: %d\n", size);
-        for (int i = 0; i < visited.size(); i++) {
-            fprintf(stderr, "DEBUG: Visited: %d\n", visited.top());
-        }
+        // int size = visited.size();
+        // fprintf(stderr, "DEBUG: visited size: %d\n", size);
+        // for (int i = 0; i < visited.size(); i++) {
+        //     fprintf(stderr, "DEBUG: Visited: %d\n", visited.top());
+        // }
 
         // Output PageId of located entry
         // cursor.eid is already set by BTLeafNode::locate() above
@@ -822,17 +812,13 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
 		PageId new_pid = -1;
         // locateChildPtr() gives the child pointer to follow,
         // given a searchKey. We do this to traverse the tree.
-		rc = nonleafnode.locateChildPtr(searchKey, new_pid);
-        fprintf(stderr, "DEBUG: new pid to follow: %d\n", new_pid);        
+		rc = nonleafnode.locateChildPtr(searchKey, new_pid);     
 
 		if (rc < 0) {
             // DEBUG
             printf("ERROR: the nonleafnode.locateChildPtr() gave back an error code.\n");
 			return rc;
 		}
-
-        printf("DEBUG: ending current tree height: %d\n", cur_tree_height - 1);
-
 		return find(searchKey, cursor, cur_tree_height - 1, new_pid, visited, isLocate);
 	}
 	// Shouldn't get to this point, but if for some reason, the height is 0

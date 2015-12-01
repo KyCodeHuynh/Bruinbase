@@ -175,21 +175,21 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     load.open(loadfile.c_str( ));
 
     // DEBUG
-    fprintf(stderr, "DEBUG: We're past opening the loadfile\n");
+    // fprintf(stderr, "DEBUG: We're past opening the loadfile\n");
 
     // CRYSTAL
     // If index is true, make a BTreeIndex in addition to the RecordFile
     // I was going to try and integrate both methods, but that would add extra logic in the while() statement
     if (index == true) {
         // DEBUG
-        fprintf(stderr, "DEBUG: Desire to make index is TRUE!\n");
+        // fprintf(stderr, "DEBUG: Desire to make index is TRUE!\n");
         if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {
             fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
             return retIndexCode;
         }
 
         if (load.is_open()) {
-            fprintf(stderr, "DEBUG: Loadfile stream is open!\n");
+            // fprintf(stderr, "DEBUG: Loadfile stream is open!\n");
             int key = -1;
             string value = "";
             RecordId rid;
@@ -204,9 +204,6 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 recFile.append(key, value, rid);
                 // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
                 indexFile.insert(key, rid);
-                fprintf(stderr, "DEBUG: \n rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
-                fprintf(stderr, "DEBUG: Tree Height: %d\n", indexFile.getTreeHeight());
-                fprintf(stderr, "DEBUG: Root Pid: %d\n", indexFile.getRootPid());
             }
         }
         else {
@@ -220,7 +217,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     // It's only optional on whether or not we create a BTreeIndex
     else {
         // DEBUG:
-        fprintf(stderr, "DEBUG: Desire to make index is FALSE!\n");
+        // fprintf(stderr, "DEBUG: Desire to make index is FALSE!\n");
         if (load.is_open()) {
             int key = -1;
             string value = "";
@@ -234,7 +231,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 parseLoadLine(line, key, value);
                 // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
-                fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
+                // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
             }
         }
         else {

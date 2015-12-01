@@ -265,10 +265,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
     // DEBUG
     PageId my_pid;
     memcpy(&my_pid, &buffer[sizeof(int)], sizeof(PageId));
-    fprintf(stderr, "looking at node with pid: %d\n", my_pid);
 
-
-    fprintf(stderr, "NOW LOOKING IN LEAF NODE FOR : %d\n key count: %d\n", searchKey, getKeyCount());
     while (searchPoint < (offset + (getKeyCount() * sizeof(LeafEntry)))) {
         memcpy(&entry, &buffer[searchPoint], sizeof(LeafEntry));
 
@@ -278,9 +275,6 @@ RC BTLeafNode::locate(int searchKey, int& eid)
         //     printf("entry.key: %d\n", entry.key);
         //     printf("searchKey arg: %d\n", searchKey);
         // }
-        
-        fprintf(stderr, "looking at key: %d\n", entry.key);
-
         // Found the entry
         if (entry.key == searchKey) {
             eid = searchIndex;
@@ -518,31 +512,34 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
     // key 5, the first one such that searchKey <= to it
     int offset = sizeof(int) + sizeof(PageId); 
     NonLeafEntry entry; 
-    int searchPoint = offset; 
-    int lastEntry = offset + (getKeyCount() * sizeof(NonLeafEntry)); 
+    // int searchPoint = offset; 
+    // int lastEntry = offset + (getKeyCount() * sizeof(NonLeafEntry)); 
+    int firstPoint = offset; 
+    int searchPoint = offset + ((getKeyCount()-1) * sizeof(NonLeafEntry)); 
 
-    // Go through all of the non-leaf node's (key, PageId) entries
-    while (searchPoint < lastEntry) {
+    // We are going to start at the end, and make our way down
+    // right to left to find the right key
+
+    while (searchPoint >= firstPoint) {
         memcpy(&entry, &buffer[searchPoint], sizeof(NonLeafEntry));
 
         // Found an exact key match or one greater than our searchKey
         // Handles the case where searchKey <= all current keys, 
         // in which case we give back the PageId in the leftmost entry, 
         // which would happen upon the first iteration of this loop.
-        if (searchKey <= entry.key) {
+        if (searchKey >= entry.key) {
             pid = entry.pid;
             return 0;
         }
 
-        searchPoint += sizeof(NonLeafEntry);
+        searchPoint -= sizeof(NonLeafEntry);
     }
         
-    // Edge case: hit the rightmost entry, and all current keys
-    // are <= searchKey. Return PageId of rightmost entry.
-    NonLeafEntry rightmost;
-    memcpy(&rightmost, &buffer[lastEntry - sizeof(NonLeafEntry)], sizeof(NonLeafEntry));
-    pid = rightmost.pid;
-
+    // Edge case: hit the leftmost, and all current keys
+    // are > searchKey. Return PageId of leftmost entry.
+    PageId leftmost;
+    memcpy(&leftmost, &buffer[sizeof(int)], sizeof(PageId));
+    pid = leftmost;
     return 0;
 }
 
