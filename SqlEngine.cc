@@ -14,13 +14,13 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
-// CRYSTAL - I feel like we need to include this header file
-// KY-CUONG - I'm fairly sure we need to do so
+
+// This needs to be included: https://piazza.com/class/ieyj7ojonx58s?cid=338
 #include "BTreeIndex.h"
 
 using namespace std;
 
-// external functions and variables for load file and sql command parsing 
+// external functions and variables for load file and sql command parsing
 extern FILE* sqlin;
 int sqlparse(void);
 BTreeIndex indexTree;
@@ -45,18 +45,18 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     BTreeIndex indexTree; // Index file data for B+ tree
 
     RC     rc;
-    int    key;     
+    int    key;
     string value;
     int    count;
     int    diff;
 
-    // open the table file
+    // Open the table file
     if ((rc = rf.open(table + ".tbl", 'r')) < 0) {
         fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
         return rc;
     }
 
-    // Open the index file 
+    // Open the index file
     if ((rc = indexTree.open(table + ".idx", 'r')) < 0) {
         fprintf(stderr, "Error: index file %s does not exist\n", table.c_str());
         return rc;
@@ -74,11 +74,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             goto exit_select;
         }
 
-        // check the conditions on the tuple
+        // Check the conditions on the tuple
+        // Run through the list of conditions for each tuple
         for (unsigned i = 0; i < cond.size(); i++) {
             // compute the difference between the tuple value and the condition value
             switch (cond[i].attr) {
                 case 1:
+                    // 1 indicates we're selecting on a key
                     diff = key - atoi(cond[i].value);
                     break;
                 case 2:
@@ -109,11 +111,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             }
         }
 
-        // the condition is met for the tuple. 
+        // the condition is met for the tuple.
         // increase matching tuple counter
         count++;
 
-        // print the tuple 
+        // print the tuple
         switch (attr) {
             case 1:  // SELECT key
                 fprintf(stdout, "%d\n", key);
@@ -143,12 +145,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         return rc;
 }
 
+
+
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
     // Use I/O libraries to open() loadfile and get a resource handle for it.
     // Open RecordFile "table".tbl if it already exists, or create it if not.
     // Get a line/tuple from loadfile using I/O libraries
-    // Parse that line/tuple using SqlEngine::parseLoadLine()   
+    // Parse that line/tuple using SqlEngine::parseLoadLine()
     // Insert the parsed tuple into the RecordFile
 
     // CRYSTAL
@@ -167,7 +171,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     // Open loadfile for reading only; ofstream does output; fstream does both
     // See documentation at: http://www.cplusplus.com/doc/tutorial/files/
     string line;
-    ifstream load; 
+    ifstream load;
     load.open(loadfile.c_str( ));
 
     // DEBUG
@@ -179,14 +183,14 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     if (index == true) {
         // DEBUG
         fprintf(stderr, "DEBUG: Desire to make index is TRUE!\n");
-        if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {    
+        if ((retIndexCode = indexFile.open(table + ".idx", 'w')) < 0) {
             fprintf(stderr, "Could not open/create file %s.idx for writing\n", table.c_str());
-            return retIndexCode;        
+            return retIndexCode;
         }
 
         if (load.is_open()) {
             fprintf(stderr, "DEBUG: Loadfile stream is open!\n");
-            int key = -1; 
+            int key = -1;
             string value = "";
             RecordId rid;
             rid.pid = -1; // PageID
@@ -204,21 +208,21 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 fprintf(stderr, "DEBUG: Tree Height: %d\n", indexFile.getTreeHeight());
                 fprintf(stderr, "DEBUG: Root Pid: %d\n", indexFile.getRootPid());
             }
-        } 
+        }
         else {
             fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
             return RC_FILE_OPEN_FAILED;
         }
 
-        indexFile.close(); 
-    } 
+        indexFile.close();
+    }
     // TODO: We actually always need to load into a RecordFile
     // It's only optional on whether or not we create a BTreeIndex
     else {
-        // DEBUG: 
+        // DEBUG:
         fprintf(stderr, "DEBUG: Desire to make index is FALSE!\n");
         if (load.is_open()) {
-            int key = -1; 
+            int key = -1;
             string value = "";
             RecordId rid;
             rid.pid = -1; // PageID
@@ -230,9 +234,9 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
                 parseLoadLine(line, key, value);
                 // fprintf(stderr, "DEBUG: Key: %d \n Value: %s\n\n", key, value.c_str());
                 recFile.append(key, value, rid);
-                // fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
+                fprintf(stderr, "DEBUG: rid.PID: %d\n rid.SID: %d\n", rid.pid, rid.sid);
             }
-        } 
+        }
         else {
             fprintf(stderr, "Unable to open file %s for reading\n", loadfile.c_str());
             return RC_FILE_OPEN_FAILED;
@@ -244,7 +248,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     return 0;
 }
 
-// Takes a raw input line from the loadfile, 
+// Takes a raw input line from the loadfile,
 // and populates its outputs with the key/value pair.
 RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
 {
@@ -267,7 +271,7 @@ RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
     do { c = *++s; } while (c == ' ' || c == '\t');
 
     // if there is nothing left, set the value to empty string
-    if (c == 0) { 
+    if (c == 0) {
         value.erase();
         return 0;
     }
