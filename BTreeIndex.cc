@@ -164,7 +164,7 @@ int BTreeIndex::getInit() const
 */
 RC BTreeIndex::setInit(int status)
 {
-    // STORAGE in Page 0: [rootPid, treeHeight, status]
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
     if (rc < 0) {
@@ -266,6 +266,60 @@ int BTreeIndex::getLargestKey() const
     return largestKey; 
 }
 
+/**
+* Set new smallest key in tree. 
+* Assumes that the PageFile has already been loaded.
+* @param newSmallest[IN] the new smallest key of the tree
+* @return error code. 0 if no error.
+*/
+RC BTreeIndex::setSmallestKey(int newSmallest)
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
+    char buffer[1024];
+    int rc = pf.read(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    int offset = sizeof(PageId) + (2 * sizeof(int));
+    memcpy(&buffer[offset], &newSmallest, sizeof(int));
+
+    // Don't forget to write the change back to disk!
+    pf.write(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+/**
+* Set new largest key in tree. 
+* Assumes that the PageFile has already been loaded.
+* @param newLargest[IN] the new largest key of the tree
+* @return error code. 0 if no error.
+*/
+RC BTreeIndex::setLargestKey(int newLargest)
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
+    char buffer[1024];
+    int rc = pf.read(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    int offset = sizeof(PageId) + (3 * sizeof(int));
+    memcpy(&buffer[offset], &newLargest, sizeof(int));
+
+    // Don't forget to write the change back to disk!
+    pf.write(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
 
 /**
 * Set new rootPid of the tree, stored in page 0
@@ -339,6 +393,12 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int midKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, insertPid, sibling, midKey);
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -368,8 +428,17 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             setTreeHeight(getTreeHeight() + 1);
         }
         else {
-            // Insert succeded. Write out contents to PageFile
+            // Insert succeded. 
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
+
+            // Write out contents to PageFile
             current.write(curPid, pf);
+
             return 0;
         }
 
@@ -397,6 +466,12 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int siblingKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, rid, sibling, siblingKey);
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -456,6 +531,12 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int midKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, insertPid, sibling, midKey);
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -476,8 +557,17 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             helperInsert(curDepth - 1, midKey, rid, siblingPid, visited);
         }
         else {
-            // Insert succeded. Write out contents to PageFile
+            // Insert succeded. 
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
+
+            // Write out contents to PageFile
             current.write(curPid, pf);
+
             return 0;
         }
     }
@@ -543,6 +633,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // printf("Empty tree case leaf_root.insert() failed!\n");
             return rc;
         }
+
+        // Update smallest and largest keys if needed
+        if (key < getSmallestKey()) {
+            setSmallestKey(key);
+        }
+        if (getLargestKey() < key) {
+            setLargestKey(key);
+        } 
 
         // No sibling yet, so set sibling pointer/PageId to -1
         leaf_root.setNextNodePtr(0);
@@ -656,6 +754,12 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             BTLeafNode sibling;
             int siblingKey;
             leaf_root.insertAndSplit(key, rid, sibling, siblingKey);
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            } 
 
             // Write out sibling to a new page
             int siblingPid = pf.endPid();
@@ -698,8 +802,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             setTreeHeight(getTreeHeight() + 1);
         }
         else {
-            // Insert succeded. Write out contents to PageFile
+            // Insert succeded. 
+            if (key < getSmallestKey()) {
+                setSmallestKey(key);
+            }
+            if (getLargestKey() < key) {
+                setLargestKey(key);
+            }
+
+            // Write out contents to PageFile 
             leaf_root.write(getRootPid(), pf);
+
             return 0;
         }
     }

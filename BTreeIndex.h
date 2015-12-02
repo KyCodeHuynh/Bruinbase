@@ -90,7 +90,7 @@ class BTreeIndex {
    */
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
 
-  /**
+ /**
   * Recursive function to search through the nodes
   * to find the searchKey
   * @param searchKey[IN] the key that we're looking for
@@ -102,7 +102,7 @@ class BTreeIndex {
   */
   RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate);
 
-  /**
+ /**
   * Return the height of the tree, stored in page 0 of our internal PageFile
   * Assumes that the PageFile has already been loaded.
   */
@@ -114,17 +114,33 @@ class BTreeIndex {
   */
   PageId getRootPid() const;
 
-  /**
+ /**
   * Return the smallest key in the tree. 
   * Used by SqlEngine as part of finding a traversal range for select()
   */
   int getSmallestKey() const;
 
-  /**
+ /**
   * Return the largest key in the tree. 
   * Used by SqlEngine as part of finding a traversal range for select()
   */
   int getLargestKey() const;
+
+ /**
+  * Set new smallest key in tree. 
+  * Assumes that the PageFile has already been loaded.
+  * @param newSmallest[IN] the new smallest key of the tree
+  * @return error code. 0 if no error.
+  */
+  RC setSmallestKey(int newSmallest);
+
+ /**
+  * Set new largest key in tree. 
+  * Assumes that the PageFile has already been loaded.
+  * @param newLargest[IN] the new largest key of the tree
+  * @return error code. 0 if no error.
+  */
+  RC setLargestKey(int newLargest);
 
  private:
 
