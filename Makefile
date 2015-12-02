@@ -27,12 +27,10 @@ test: bruinbase $(NODE_TEST_SRC) $(TREE_TEST_SRC) $(SRC)
 	bash queries.sh
 	# Test everything with provided tests
 	# See: https://stackoverflow.com/questions/1789594/how-to-write-cd-command-in-makefile
-	cp bruinbase ./project2-test/ && \
-	chmod 0755 ./project2-test/test.sh && \
-	cd project2-test/ && \
+	chmod 0755 test.sh
 	./test.sh
 
 clean:
 	rm -rf bruinbase *.dSYM/ bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt \
 	indexmovie.idx *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl \
-	./project2-test/*.idx ./project2-test/*.tbl ./project2-test/bruinbase*
+	xsmall.idx xsmall.tbl small.idx small.tbl medium.idx medium.tbl large.idx large.tbl xlarge.idx xlarge.tbl
