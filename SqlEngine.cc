@@ -158,6 +158,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                 goto exit_index_select;
             }
 
+            // Make sure if it's a key that goes too far
+            if (key > rangeTop || key > largest_key) {
+                    break;
+            }
+
             // Check the conditions on the tuple
             // Run through the list of conditions for each tuple
             for (unsigned i = 0; i < cond.size(); i++) {
