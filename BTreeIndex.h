@@ -90,8 +90,6 @@ class BTreeIndex {
    */
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
 
- private:
-
   /**
   * Recursive function to search through the nodes
   * to find the searchKey
@@ -103,6 +101,20 @@ class BTreeIndex {
   * @return error code if error. 0 if successful.
   */
   RC find(int searchKey, IndexCursor& cursor, int cur_tree_height, PageId cur_pid, std::stack<PageId>& visited, bool isLocate);
+
+  /**
+  * Return the height of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  int getTreeHeight() const;
+
+  /**
+  * Return the rootPid of the tree, stored in page 0 of our internal PageFile
+  * Assumes that the PageFile has already been loaded.
+  */
+  PageId getRootPid() const;
+
+ private:
 
   /**
   * Recursive function to insert (key, RecordId) pairs
@@ -117,26 +129,12 @@ class BTreeIndex {
   RC helperInsert(int curDepth, int key, const RecordId& rid, PageId insertPid, std::stack<PageId>& visited);
 
   /**
-  * Return the height of the tree, stored in page 0 of our internal PageFile
-  * Assumes that the PageFile has already been loaded.
-  */
-  int getTreeHeight() const;
-
-  /**
-  * Return the rootPid of the tree, stored in page 0 of our internal PageFile
-  * Assumes that the PageFile has already been loaded.
-  */
-  PageId getRootPid() const;
-
-  /**
   * Set new height of the tree, stored in page 0
   * Assumes that the PageFile has already been loaded.
   * @param newHeight[IN] the new height of the tree
   * @return error code. 0 if no error.
   */
   RC setTreeHeight(int newHeight);
-
-
 
   /**
   * Set new rootPid of the tree, stored in page 0

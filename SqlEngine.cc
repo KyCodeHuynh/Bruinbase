@@ -18,6 +18,7 @@
 #include "SqlEngine.h"
 // This needs to be included: https://piazza.com/class/ieyj7ojonx58s?cid=338
 #include "BTreeIndex.h"
+#include "BTreeNode.h"
 
 using namespace std;
 
@@ -125,17 +126,67 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             }
         }
 
-        // SELECT COUNT(*) 
+        // Special case: if rangeBottom is still not properly initialized, 
+        // then we lack '<' or '<=' selectors. We need to start
+        // at the smallest key, which can be found via find() (gee whiz)
+        // It's fine if rangeTop is not initialized, as we can just
+        // go till the end of the tree's leaves
+        if (rangeBottom == INT_MIN) {
+            IndexCursor cursor;
+            std::stack<PageId> visited;
+            bool isLocate = false;
+
+            // find() with INT_MIN will take us to the node with the smallest keys
+            // We want the first of those keys, which is the smallest of any in the tree/RecordFile
+            indexTree.find(INT_MIN, cursor, indexTree.getTreeHeight(), indexTree.getRootPid(), visited, isLocate);
+
+            // Ky-Cuong: This is so hacky, but we don't have a
+            // proper function for getting the leftmost key of a node. 
+            // locate() for example, will give back the rightmost key of a node
+            // if the searchKey is < all of the keys in the node. 
+            BTLeafNode leaf_node;
+            PageFile temp_pf;
+
+            // Read node contents into temporary PageFile and extract key manually
+            leaf_node.write(0, temp_pf);
+            char node_contents[1024];
+            temp_pf.write(0, node_contents);
+
+            // C++ structs are basically classes, except for default member privacy
+            // This avoids the need for a preceding 'struct' keyword when instantiating
+            struct LeafEntry {
+                int key; 
+                RecordId rid;
+            };
+
+            // Extract first key from that leaf node
+            LeafEntry first_entry;
+            int offset = sizeof(int) + sizeof(PageId);
+            memcpy(&first_entry, &node_contents[offset], sizeof(LeafEntry));
+
+            // "This is bigger than one integer. --- No. It's not."
+            // So much effort to retrieve this integer astronaut. Go Mark Watney!
+            rangeBottom = first_entry.key;
+        }
+
+        // TODO: readForward() from rangeBottom until up to and including rangeTop
+
+        // TODO: What about edge cases of strict inequality?
+        // For example, 'key < 5' should not include tuples with key >= 5
+
+        // TODO: Iterate through the selecting conditions
+        // and make sure all of them are satisfied
+
+        // TODO: If the tuple passes, increment count or project out attributes
+        // identified by the 'attr' argument for select()
+
+        // SELECT COUNT(*) ?
         if (attr == 4) {
             fprintf(stdout, "%d\n", countResult);
         }
     }
 
-    // Iterate through the selecting conditions
-    // and make sure all of them are satisfied
-    
-
-    // Scan through the table if we should use 
+    // Scan through the table if we should do that instead
     else {
         int    key;
         string value;
