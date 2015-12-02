@@ -111,16 +111,16 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                     if (rangeBottom == INT_MIN) {
                         rangeBottom = compKey;
                     }
-                    else if (compKey < rangeBottom) {
-                        rangeBottom = compKey;
+                    else if (compKey < rangeTop) {
+                        rangeTop = compKey;
                     }
                 }
                 else if (it->comp == SelCond::GE || it->comp == SelCond::GT) {
                     if (rangeBottom == INT_MAX) {
                         rangeBottom = compKey;
                     }
-                    else if (rangeTop < compKey) {
-                        rangeTop = compKey;
+                    else if (compKey > rangeBottom) {
+                        rangeBottom = compKey;
                     }
                 }
             }
@@ -167,9 +167,102 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // "This is bigger than one integer. --- No. It's not."
             // So much effort to retrieve this integer astronaut. Go Mark Watney!
             rangeBottom = first_entry.key;
+        } 
+
+        // Make sure that rangeBottom and rangeTop don't have an impossible range
+        if (rangeTop < rangeBottom) {
+            fprintf(stderr, "This is an impossible range.\n");
+            return RC_INVALID_ATTRIBUTE;
         }
 
         // TODO: readForward() from rangeBottom until up to and including rangeTop
+        // find the rangeBottom value
+        int start_key = rangeBottom;
+
+        // IndexCursor pointing to the first key
+        IndexCursor cursor;
+        indexTree.locate(start_key, cursor);
+
+        // Holders for each key, rid, value
+        int key = -1;
+        RecordId rid;
+        rid.pid = -1; 
+        rid.sid = -1;
+        string value = "";
+        int diff = 0;
+
+        // Major for-loop to print out all the keys
+        while (1) {
+            // Reads the current cursor into key and rid, goes to the next one
+            indexTree.readForward(cursor, key, rid);
+
+            if ((rc = rf.read(rid, key, value)) < 0) {
+                fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+                goto exit_index_select;
+            }
+
+            // Check the conditions on the tuple
+            // Run through the list of conditions for each tuple
+            for (unsigned i = 0; i < cond.size(); i++) {
+                // compute the difference between the tuple value and the condition value
+                switch (cond[i].attr) {
+                    case 1:
+                        // 1 indicates we're selecting on a key
+                        diff = key - atoi(cond[i].value);
+                        break;
+                    case 2:
+                        diff = strcmp(value.c_str(), cond[i].value);
+                        break;
+                }
+
+                // skip the tuple if any condition is not met
+                switch (cond[i].comp) {
+                    case SelCond::EQ:
+                        if (diff != 0) goto read_forward;
+                        break;
+                    case SelCond::NE:
+                        if (diff == 0) goto read_forward;
+                        break;
+                    case SelCond::GT:
+                        if (diff <= 0) goto read_forward;
+                        break;
+                    case SelCond::LT:
+                        if (diff >= 0) goto read_forward;
+                        break;
+                    case SelCond::GE:
+                        if (diff < 0) goto read_forward;
+                        break;
+                    case SelCond::LE:
+                        if (diff > 0) goto read_forward;
+                        break;
+                }
+            }
+
+            // the condition is met for the tuple.
+            // increase matching tuple counter
+            countResult++;
+
+            // print the tuple
+            switch (attr) {
+                case 1:  // SELECT key
+                    fprintf(stdout, "%d\n", key);
+                    break;
+                case 2:  // SELECT value
+                    fprintf(stdout, "%s\n", value.c_str());
+                    break;
+                case 3:  // SELECT *
+                    fprintf(stdout, "%d '%s'\n", key, value.c_str());
+                    break;
+            }
+
+            // move to the next tuple
+            read_forward:
+                // TODO: find the last key!
+                // At the end of the for loop, if this was the last key, then break out of loop
+                if (key == rangeTop) {
+                    break;
+                }
+        }
 
         // TODO: What about edge cases of strict inequality?
         // For example, 'key < 5' should not include tuples with key >= 5
@@ -184,6 +277,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         if (attr == 4) {
             fprintf(stdout, "%d\n", countResult);
         }
+        rc = 0;
+
+        // close the table file and return
+        exit_index_select:
+            rf.close();
+            return rc;
     }
 
     // Scan through the table if we should do that instead
