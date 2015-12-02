@@ -35,7 +35,7 @@ latex/*
 SqlParser.tab.c
 SqlParser.tab.h
 bruinbase
-bruinbase.dSYM/*
+*.dSYM
 lex.sql.c
 *.swp
 indexmovie.tbl
@@ -46,3 +46,4 @@ nonleaf-node-test.txt
 tree-test
 tree-test.txt
 indexmovie.idx
+

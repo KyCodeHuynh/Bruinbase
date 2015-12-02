@@ -16,16 +16,21 @@ SqlParser.tab.c: SqlParser.y
 # TODO: Comment out before submission, just in case TA uses this Makefile
 test: bruinbase $(NODE_TEST_SRC) $(TREE_TEST_SRC) $(SRC)
 	# Test BTreeNode
-	g++ -o node-test $(NODE_TEST_SRC) 
+	g++ -ggdb -o node-test $(NODE_TEST_SRC) 
 	chmod 0755 node-test
 	./node-test
 	# Test BTreeIndex
-	g++ -o tree-test $(TREE_TEST_SRC)
+	g++ -ggdb -o tree-test $(TREE_TEST_SRC)
 	chmod 0755 tree-test
 	./tree-test
 	# Test everything via SqlEngine
 	bash queries.sh
-	# TODO: Copy in provided 2D tests and run, then rm them here
+	# Test everything with provided tests
+	cp bruinbase ./project2-test/
+	chmod 0755 ./project2-test/test.sh
+	cd project2-test/ ; ./test.sh
 
 clean:
-	rm -f bruinbase bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt indexmovie.idx *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl
+	rm -rf bruinbase *.dSYM/ bruinbase.exe node-test node-test.txt nonleaf-node-test.txt tree-test tree-test.txt \
+	indexmovie.idx *.o *~ lex.sql.c SqlParser.tab.c SqlParser.tab.h newmovie.tbl indexmovie.tbl \
+	./project2-test/*.idx ./project2-test/*.tbl ./project2-test/bruinbase*
