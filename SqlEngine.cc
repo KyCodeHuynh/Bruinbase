@@ -92,8 +92,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         // Keys are of at most long int size, i.e., +/- 2 billion or so
         // See: https://piazza.com/class/ieyj7ojonx58s?cid=328
         // See: http://www.cplusplus.com/reference/climits/
-        int rangeBottom = indexTree.getSmallestKey();
-        int rangeTop = indexTree.getLargestKey();
+        int smallest_key = indexTree.getSmallestKey();
+        int largest_key = indexTree.getLargestKey();
+        int rangeBottom = smallest_key;
+        int rangeTop = largest_key;
+        
         fprintf(stderr, "RANGE BOTTOM START: %d\n", rangeBottom);
         fprintf(stderr, "RANGE TOP START: %d\n", rangeTop);
 
@@ -209,7 +212,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // move to the next tuple
             read_forward:
                 // At the end of the for loop, if this was the last key, then break out of loop
-                if (key == rangeTop || key == indexTree.getLargestKey()) {
+                if (key == rangeTop || key == largest_key) {
                     break;
                 }
         }
