@@ -92,8 +92,10 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         // Keys are of at most long int size, i.e., +/- 2 billion or so
         // See: https://piazza.com/class/ieyj7ojonx58s?cid=328
         // See: http://www.cplusplus.com/reference/climits/
-        int rangeBottom = INT_MIN;
-        int rangeTop = INT_MAX;
+        int rangeBottom = indexTree.getSmallestKey();
+        int rangeTop = indexTree.getLargestKey();
+        fprintf(stderr, "RANGE BOTTOM START: %d\n", rangeBottom);
+        fprintf(stderr, "RANGE TOP START: %d\n", rangeTop);
 
         // We want the smallest <, <= (lower bound)
         // and the largest >, >= (upper bound)
@@ -105,39 +107,22 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                 // Update rangeBottom if we find a 'key < A' or 'key <= A', 
                 // where A < rangeBottom. 
                 if (it->comp == SelCond::LE || it->comp == SelCond::LT) {
-                    // Exception: We always update rangeBottom 
-                    // to A if rangeBottom is still its default value
-                    // 'value' is of type 'char*' in SqlEngine::SelCond
-                    if (rangeBottom == INT_MIN) {
-                        rangeBottom = compKey;
-                    }
-                    else if (compKey < rangeTop) {
+                    if (compKey < rangeTop) {
                         rangeTop = compKey;
                     }
                 }
                 else if (it->comp == SelCond::GE || it->comp == SelCond::GT) {
-                    if (rangeBottom == INT_MAX) {
-                        rangeBottom = compKey;
-                    }
-                    else if (compKey > rangeBottom) {
+                    if (compKey > rangeBottom) {
                         rangeBottom = compKey;
                     }
                 }
             }
         }
 
-        // Special case: if rangeBottom is still not properly initialized, 
-        // then we lack '<' or '<=' selectors. We need to start
-        // at the smallest key.
-        // It's fine if rangeTop is not initialized, as we can just
-        // go till the end of the tree's leaves
-        if (rangeBottom == INT_MIN) {
-            rangeBottom = indexTree.getSmallestKey();
-        } 
-
         // Make sure that rangeBottom and rangeTop don't have an impossible range
         if (rangeTop < rangeBottom) {
             fprintf(stderr, "This is an impossible range.\n");
+            fprintf(stderr, "rangeTop and rangeBottom: %d %d\n", rangeTop, rangeBottom);    
             return RC_INVALID_ATTRIBUTE;
         }
 
@@ -224,7 +209,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // move to the next tuple
             read_forward:
                 // At the end of the for loop, if this was the last key, then break out of loop
-                if (key == indexTree.getLargestKey()) {
+                if (key == rangeTop || key == indexTree.getLargestKey()) {
                     break;
                 }
         }
