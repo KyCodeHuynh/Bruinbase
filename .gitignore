@@ -46,4 +46,6 @@ nonleaf-node-test.txt
 tree-test
 tree-test.txt
 indexmovie.idx
-
+*.dSYM/*
+project2-test/*.idx
+project2-test/*.tbl
