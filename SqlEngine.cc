@@ -153,8 +153,19 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // Reads the current cursor into key and rid, goes to the next one
             indexTree.readForward(cursor, key, rid);
 
+            // DEBUG
+            // Look for the key that's missing!
+            if (key == 4657) {
+                indexTree.locate(4657, cursor);
+                fprintf(stderr, "What we really want: pid: %d eid:%d\n", cursor.pid, cursor.eid);                            
+            }
+
+
+            // DEBUG
+            fprintf(stderr, "looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);
+
             if ((rc = rf.read(rid, key, value)) < 0) {
-                fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+                fprintf(stderr, "Error: while reading a tuple from table %s: %d\n", table.c_str(), rc);
                 goto exit_index_select;
             }
 
@@ -163,14 +174,23 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                     break;
             }
 
+            // Keep track if equal case is handled
+            bool eq_check = false;
+            int value_check = 0;
+
             // Check the conditions on the tuple
             // Run through the list of conditions for each tuple
             for (unsigned i = 0; i < cond.size(); i++) {
+                eq_check = false;
+                value_check = 0;
+
                 // compute the difference between the tuple value and the condition value
                 switch (cond[i].attr) {
                     case 1:
                         // 1 indicates we're selecting on a key
-                        diff = key - atoi(cond[i].value);
+                        eq_check = true;
+                        value_check = atoi(cond[i].value);
+                        diff = key - value_check;
                         break;
                     case 2:
                         diff = strcmp(value.c_str(), cond[i].value);
@@ -180,7 +200,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                 // skip the tuple if any condition is not met
                 switch (cond[i].comp) {
                     case SelCond::EQ:
-                        if (diff != 0) goto read_forward;
+                        if (diff != 0) goto equal_escape;
                         break;
                     case SelCond::NE:
                         if (diff == 0) goto read_forward;
@@ -216,6 +236,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
                     fprintf(stdout, "%d '%s'\n", key, value.c_str());
                     break;
             }
+
+            equal_escape:
+                // if you found an equal key to the one looked for, exit!
+                if (eq_check == true && key == value_check) {
+                    break;
+                } else {
+                    goto read_forward;
+                }
 
             // move to the next tuple
             read_forward:

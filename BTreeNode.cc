@@ -226,6 +226,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     // Insert our argument (key, RecordId) pair into the appropriate node 
     if (pastMid) {
         insert(entry.key, entry.rid);
+        fprintf(stderr, "my added key, pid, sid: %d %d %d\n", entry.key, entry.rid.pid, entry.rid.sid);
     }
     else {
         sibling.insert(entry.key, entry.rid);
@@ -326,7 +327,8 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
     LeafEntry entry; 
     memcpy(&entry, &buffer[offset + eid * sizeof(LeafEntry)], sizeof(LeafEntry));
     key = entry.key;
-    rid = entry.rid;
+    rid.pid = entry.rid.pid;
+    rid.sid = entry.rid.sid;
 
     return 0; 
 }
@@ -339,7 +341,7 @@ PageId BTLeafNode::getNextNodePtr()
 { 
     // Return internally stored pointer to next sibling
     PageId retVal; 
-    memcpy(&retVal, (buffer + sizeof(int)), sizeof(PageId));
+    memcpy(&retVal, &buffer[sizeof(int)], sizeof(PageId));
     return retVal; 
 }
 
@@ -360,7 +362,7 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     // Pointer arithmetic moves us forward by the sizeof(dataType) 
     // for each +1 increment. We have chars though, so everything
     // is 1 byte.   
-    memcpy((buffer + sizeof(int)), &pid, sizeof(PageId));
+    memcpy(&buffer[sizeof(int)], &pid, sizeof(PageId));
     return 0; 
 }
 

@@ -301,6 +301,10 @@ RC BTreeIndex::setSmallestKey(int newSmallest)
 */
 RC BTreeIndex::setLargestKey(int newLargest)
 {
+    if (newLargest == 2016123411) {
+        printf("WHAT IS THIS???");
+    }
+
     // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
@@ -388,17 +392,15 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         rc = current.insert(key, insertPid);
         // Node full?
         if (rc == RC_NODE_FULL) {
+            // DEBUG
+            fprintf(stderr, "SPLIT THIS NON-LEAF NODE!");
+
+
             // insertAndSplit() into a new sibling
             BTNonLeafNode sibling;
             int midKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, insertPid, sibling, midKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -428,13 +430,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             setTreeHeight(getTreeHeight() + 1);
         }
         else {
-            // Insert succeded. 
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out contents to PageFile
             current.write(curPid, pf);
@@ -462,16 +457,12 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         // Overflow?
         if (rc == RC_NODE_FULL) {
             // insertAndSplit() into a new sibling
+            fprintf(stderr, "SPLIT THIS LEAF NODE!");
+
             BTLeafNode sibling;
             int siblingKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, rid, sibling, siblingKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -531,12 +522,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int midKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, insertPid, sibling, midKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -557,13 +542,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             helperInsert(curDepth - 1, midKey, rid, siblingPid, visited);
         }
         else {
-            // Insert succeded. 
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out contents to PageFile
             current.write(curPid, pf);
@@ -599,14 +577,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // We cannot use the setter helpers, as
         // page 0 is not yet allocated.
         memset(buffer, 0, sizeof(PageId) + sizeof(int));
-
-        // Initialize the smallest key found so far to INT_MAX
-        // and the largest key found so far to INT_MIN
-        int offset = sizeof(PageId) + (2 * sizeof(int));
-        memset(&buffer[offset], INT_MAX, sizeof(int));
-
-        offset = sizeof(PageId) + (3 * sizeof(int));
-        memset(&buffer[offset], INT_MIN, sizeof(int));
 
         // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 
@@ -750,12 +720,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             BTLeafNode sibling;
             int siblingKey;
             leaf_root.insertAndSplit(key, rid, sibling, siblingKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            } 
 
             // Write out sibling to a new page
             int siblingPid = pf.endPid();
@@ -796,21 +760,15 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             // Update rootPid and treeHeight
             setRootPid(rootPid);
             setTreeHeight(getTreeHeight() + 1);
+
         }
         else {
-            // Insert succeded. 
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            }
-            if (getLargestKey() < key) {
-                setLargestKey(key);
-            }
 
             // Write out contents to PageFile 
             leaf_root.write(getRootPid(), pf);
 
-            return 0;
         }
+
     }
 
     // CASE 2: Root node + children exist
@@ -875,6 +833,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         // Update treeHeight when?
 
     // Insert succeeded
+
+    // Insert was successful!
+    if (key < getSmallestKey()) {
+        setSmallestKey(key);
+    } else if (getLargestKey() < key) {
+        setLargestKey(key);
+    }
+
     return 0;
 }
 
@@ -1045,22 +1011,36 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
     // Assuming this is a leaf node, so we have a RecordId
     // Use readEntry(), then update cursor.eid += 1
-
     // Spin up a new leaf node with the pointed-to contents
     BTLeafNode leaf;
     int rc = leaf.read(cursor.pid, pf);
     if (rc < 0) {
+        // DEBUG
+        fprintf(stderr, "read cursor\n");
         return rc;
     }
+
+    // DEBUG
+    fprintf(stderr, "EID and Key Count: %d %d\n", cursor.eid, leaf.getKeyCount());
 
     // Get the wanted contents.
     rc = leaf.readEntry(cursor.eid, key, rid);
     if (rc < 0) {
+        // DEBUG
+        fprintf(stderr, "read Entry\n");
         return rc;
     }
 
-    // Update the IndexCursor
-    cursor.eid += 1;
 
+    // Update the IndexCursor 
+    // If the eid reaches the last entry in the node, go to the sibling
+    if ((cursor.eid + 1) >= leaf.getKeyCount()) {
+        // DEBUG
+        fprintf(stderr, "trying to get the sibling node\n");
+        cursor.pid = leaf.getNextNodePtr();
+        cursor.eid = 0;
+    } else {
+        cursor.eid += 1;
+    }
     return 0;
 }
