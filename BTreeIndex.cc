@@ -634,13 +634,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             return rc;
         }
 
-        // Update smallest and largest keys if needed
-        if (key < getSmallestKey()) {
-            setSmallestKey(key);
-        }
-        if (getLargestKey() < key) {
-            setLargestKey(key);
-        } 
+        // Initialized keys
+        setSmallestKey(key);
+        setLargestKey(key); 
 
         // No sibling yet, so set sibling pointer/PageId to -1
         leaf_root.setNextNodePtr(0);
