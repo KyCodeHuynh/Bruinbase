@@ -175,7 +175,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             return RC_INVALID_ATTRIBUTE;
         }
 
-        // TODO: readForward() from rangeBottom until up to and including rangeTop
+        // readForward() from rangeBottom until up to and including rangeTop
         // find the rangeBottom value
         int start_key = rangeBottom;
 

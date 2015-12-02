@@ -7,6 +7,7 @@
  * @date 3/24/2008
  */
 
+#include <climits>
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -78,7 +79,7 @@ RC BTreeIndex::close()
 */
 int BTreeIndex::getTreeHeight() const
 {
-    // STORAGE in Page 0: [rootPid, treeHeight]
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
     if (rc < 0) {
@@ -137,7 +138,7 @@ RC BTreeIndex::setTreeHeight(int newHeight)
 */
 int BTreeIndex::getInit() const
 {
-    // STORAGE in Page 0: [rootPid, treeHeight, init status]
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
     if (rc < 0) {
@@ -195,7 +196,7 @@ PageId BTreeIndex::getRootPid() const
         // printf("getRootPid() reports not yet initialized or its empty. Give 0 by default.\n");
         return 0;
     }
-    // STORAGE in Page 0: [rootPid, treeHeight]
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
     if (rc < 0) {
@@ -219,6 +220,50 @@ PageId BTreeIndex::getRootPid() const
         return 0;
     }
 
+}
+
+/**
+* Return the smallest key in the tree. 
+* Used by SqlEngine as part of finding a traversal range for select()
+*/
+int BTreeIndex::getSmallestKey() const
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
+    char buffer[1024];
+    int rc = pf.read(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    int smallestKey = -1;
+    // PageId, treeHeight, and status are stored first
+    int offset = sizeof(PageId) + (2 * sizeof(int));
+
+    // C functions are not at all intuitive to read
+    memcpy(&smallestKey, &buffer[offset], sizeof(int));
+    return smallestKey;
+}
+
+/**
+* Return the largest key in the tree. 
+* Used by SqlEngine as part of finding a traversal range for select()
+*/
+int BTreeIndex::getLargestKey() const
+{
+    // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
+    char buffer[1024];
+    int rc = pf.read(0, buffer);
+    if (rc < 0) {
+        return rc;
+    }
+
+    int largestKey = -1;
+    // PageId, treeHeight, and status are stored first
+    int offset = sizeof(PageId) + (3 * sizeof(int));
+
+    // C functions are not at all intuitive to read
+    memcpy(&largestKey, &buffer[offset], sizeof(int));
+    return largestKey; 
 }
 
 
@@ -463,7 +508,15 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
         // We cannot use the setter helpers, as
         // page 0 is not yet allocated.
-        memset(buffer, 0, 1024);
+        memset(buffer, 0, sizeof(PageId) + sizeof(int));
+
+        // Initialize the smallest key found so far to INT_MAX
+        // and the largest key found so far to INT_MIN
+        int offset = sizeof(PageId) + (2 * sizeof(int));
+        memset(&buffer[offset], INT_MAX, sizeof(int));
+
+        offset = sizeof(PageId) + (3 * sizeof(int));
+        memset(&buffer[offset], INT_MIN, sizeof(int));
 
         // printf("DEBUG: endPid after write of metadata buffer: %d\n", pf.endPid());
 

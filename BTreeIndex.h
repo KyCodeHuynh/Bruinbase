@@ -114,6 +114,18 @@ class BTreeIndex {
   */
   PageId getRootPid() const;
 
+  /**
+  * Return the smallest key in the tree. 
+  * Used by SqlEngine as part of finding a traversal range for select()
+  */
+  int getSmallestKey() const;
+
+  /**
+  * Return the largest key in the tree. 
+  * Used by SqlEngine as part of finding a traversal range for select()
+  */
+  int getLargestKey() const;
+
  private:
 
   /**
@@ -164,13 +176,16 @@ class BTreeIndex {
 
   // See if PageFile loaded yet
   // bool isInitialized;
+
+  // Inside of Page 0, we store (in this order)
   // PageId   rootPid;    /// the PageId of the root node
   // int      treeHeight; /// the height of the tree
+  // int      status  /// whether the tree is initialized yet
+  // int      smallestKey; /// smallest key in the tree
+  // int      largestKey; /// smallest key in the tree
 
-  // PageId rootPid and int treeHeight are stored
-  // in Page 0 of our internal PageFile.
   // Order of storage: rootPid, treeHeight,
-  // occupying the first sizeof(PageId) + sizeof(int) bytes
+  // occupying the first sizeof(PageId) +  4 * sizeof(int) bytes
   //
   // Get/set them through the helpers above only.
   // This keeps us from forgetting to update
