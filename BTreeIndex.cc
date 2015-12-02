@@ -401,12 +401,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int midKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, insertPid, sibling, midKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            } else if (getLargestKey() < key) {
-                setLargestKey(key);
-            }
-
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -469,11 +463,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             int siblingKey = 0;
             PageId siblingPid = pf.endPid();
             current.insertAndSplit(key, rid, sibling, siblingKey);
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            } else if (getLargestKey() < key) {
-                setLargestKey(key);
-            }
 
             // Write out updated sibling and current
             rc = current.write(curPid, pf);
@@ -502,13 +491,7 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             helperInsert(curDepth - 1, siblingKey, rid, siblingPid, visited);
         }
         // Insertion attempt succeeded
-        else {            
-            if (key < getSmallestKey()) {
-                setSmallestKey(key);
-            } else if (getLargestKey() < key) {
-                setLargestKey(key);
-            }   
-            
+        else {
             current.write(curPid, pf);
             return 0;
         }
