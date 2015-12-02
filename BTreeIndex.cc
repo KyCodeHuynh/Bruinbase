@@ -457,7 +457,7 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         // Overflow?
         if (rc == RC_NODE_FULL) {
             // insertAndSplit() into a new sibling
-            fprintf(stderr, "SPLIT THIS LEAF NODE!");
+            fprintf(stderr, "DEBUG: SPLIT THIS LEAF NODE!");
 
             BTLeafNode sibling;
             int siblingKey = 0;

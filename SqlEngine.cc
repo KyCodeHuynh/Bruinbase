@@ -157,12 +157,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // Look for the key that's missing!
             if (key == 4657) {
                 indexTree.locate(4657, cursor);
-                fprintf(stderr, "What we really want: pid: %d eid:%d\n", cursor.pid, cursor.eid);                            
+                fprintf(stderr, "DEBUG: What we really want: pid: %d eid:%d\n", cursor.pid, cursor.eid);                            
             }
 
 
             // DEBUG
-            fprintf(stderr, "looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);
+            fprintf(stderr, "DEBUG: looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);
 
             if ((rc = rf.read(rid, key, value)) < 0) {
                 fprintf(stderr, "Error: while reading a tuple from table %s: %d\n", table.c_str(), rc);
