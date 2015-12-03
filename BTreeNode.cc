@@ -319,7 +319,7 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 
     // Negative or overly large entry index? 
     if (eid < 0 || eid > (getKeyCount() - 1)) {
-        fprintf(stderr, "DEBUG: Invalid eid in BTLeafNode::readEntry() [Line: %d]\n", __LINE__);
+        // fprintf(stderr, "DEBUG: Invalid eid in BTLeafNode::readEntry() [Line: %d]\n", __LINE__);
         return RC_NO_SUCH_RECORD;
     }
 
