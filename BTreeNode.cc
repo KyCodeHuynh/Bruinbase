@@ -226,7 +226,6 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     // Insert our argument (key, RecordId) pair into the appropriate node 
     if (pastMid) {
         insert(entry.key, entry.rid);
-        fprintf(stderr, "my added key, pid, sid: %d %d %d\n", entry.key, entry.rid.pid, entry.rid.sid);
     }
     else {
         sibling.insert(entry.key, entry.rid);

@@ -301,10 +301,6 @@ RC BTreeIndex::setSmallestKey(int newSmallest)
 */
 RC BTreeIndex::setLargestKey(int newLargest)
 {
-    if (newLargest == 2016123411) {
-        printf("WHAT IS THIS???");
-    }
-
     // STORAGE in Page 0: [rootPid, treeHeight, status, smallestKey, largestKey]
     char buffer[1024];
     int rc = pf.read(0, buffer);
@@ -379,6 +375,7 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
     // At root. Note that we get here after propagating upward
     // from overflows at levels below, so insertPid should be passed in.g
     if (curDepth == 0) {
+
         // Pop off top of visited stack into non-leaf node
         BTNonLeafNode current;
         PageId curPid = visited.top();
@@ -439,6 +436,11 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
 
     // Else if at a leaf node (with insertPid ignored)
     else if (curDepth == getTreeHeight()) {
+
+        if (key == 2016123411) {
+            printf("CASE AT LEAF\n\n");
+        }
+
         // Pop off top of visited stack into leaf node
         BTLeafNode current;
         PageId curPid = visited.top();
@@ -448,13 +450,17 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             return rc;
         }
 
+        if (key == 2016123411) {
+            printf("TRYING TO INSERT: key: %d pid: %d sid: %d \n\n", key, rid.pid, rid.sid);
+        }
+
         // Try insertion (RecordId as this is a leaf node)
         rc = current.insert(key, rid);
 
         // Overflow?
         if (rc == RC_NODE_FULL) {
             // insertAndSplit() into a new sibling
-
+            
             BTLeafNode sibling;
             int siblingKey = 0;
             PageId siblingPid = pf.endPid();
@@ -474,6 +480,10 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             current.setNextNodePtr(siblingPid);
             sibling.setNextNodePtr(0);
 
+            RecordId siblingRid;
+            int key_check;
+            sibling.readEntry(0, key_check, siblingRid);
+
             // Recurse with:
             // insertPid = siblingPid, the PageId of the new sibling
             // key = siblingKey
@@ -484,7 +494,7 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
             // possibly in a new root.
             //
             // NOTE: visited stack already modified by previous pop()
-            helperInsert(curDepth - 1, siblingKey, rid, siblingPid, visited);
+            helperInsert(curDepth - 1, siblingKey, siblingRid, siblingPid, visited);
         }
         // Insertion attempt succeeded
         else {
@@ -558,6 +568,13 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
+    //DEBUG
+    if (key == 4657) {
+        fprintf(stderr, "INSERT key: %d rid.pid: %d sid: %d \n", key, rid.pid, rid.sid);            
+    }
+
+
+
     // CASE 0: Root node does not yet exist
     //
     // Reserve page 0 for tree information,
@@ -682,6 +699,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     // first few (key, RecordId) pairs. After insertion, we use BTLeafNode::write()
     // to write the node contents to our internal PageFile to save them.
     else if (getTreeHeight() == 0) {
+
         // Get leaf node
         BTLeafNode leaf_root;
         int rc = leaf_root.read(getRootPid(), pf);
@@ -769,6 +787,12 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
     // CASE 2: Root node + children exist
     else {
+
+        // DEBUG
+        if (key == 2016123411) {
+            printf("CASE 2\n\n");
+        }
+
         // Modified find() will record PageId's of nodes visited
         // Lets us avoid duplicating traversal algorithm
         // Initial insertPid is -1, as it's only used when we have overflow
@@ -1024,6 +1048,9 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 
     // Get the wanted contents.
     rc = leaf.readEntry(cursor.eid, key, rid);
+
+    // // DEBUG
+    fprintf(stderr, "\nkey: %d rid.pid: %d sid: %d \n", key, rid.pid, rid.sid);            
 
     if (rc < 0) {
         // DEBUG
