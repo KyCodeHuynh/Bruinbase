@@ -49,6 +49,8 @@ indexmovie.idx
 *.dSYM/*
 project2-test/*.idx
 project2-test/*.tbl
+xlarge.idx
+xlarge.tbl
 large.idx
 large.tbl
 medium.idx

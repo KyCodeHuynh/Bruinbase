@@ -320,12 +320,14 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 
     // Negative or overly large entry index? 
     if (eid < 0 || eid > (getKeyCount() - 1)) {
+        fprintf(stderr, "DEBUG: Invalid eid in BTLeafNode::readEntry() [Line: %d]\n", __LINE__);
         return RC_NO_SUCH_RECORD;
     }
 
     int offset = sizeof(int) + sizeof(PageId);
     LeafEntry entry; 
-    memcpy(&entry, &buffer[offset + eid * sizeof(LeafEntry)], sizeof(LeafEntry));
+    // TODO: Is this offset off by 1? 
+    memcpy(&entry, &buffer[offset + (eid * sizeof(LeafEntry))], sizeof(LeafEntry));
     key = entry.key;
     rid.pid = entry.rid.pid;
     rid.sid = entry.rid.sid;
