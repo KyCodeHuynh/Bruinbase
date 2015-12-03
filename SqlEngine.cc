@@ -140,6 +140,9 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         IndexCursor cursor;
         indexTree.locate(start_key, cursor);
 
+        // DEBUG
+        fprintf(stderr, "DEBUG: key: %d pid:%d eid:%d \n", start_key, cursor.pid, cursor.eid);
+
         // Holders for each key, rid, value
         int key = -1;
         RecordId rid;
@@ -150,16 +153,16 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
         // Major for-loop to print out all the keys
         while (1) {
+
             // Reads the current cursor into key and rid, goes to the next one
             indexTree.readForward(cursor, key, rid);
 
             // DEBUG
             // Look for the key that's missing!
-            if (key == 4657) {
-                indexTree.locate(4657, cursor);
-                fprintf(stderr, "DEBUG: What we really want: pid: %d eid:%d\n", cursor.pid, cursor.eid);                            
-            }
-
+            // if (key == 4657) {
+            //     indexTree.locate(4657, cursor);
+            //     fprintf(stderr, "DEBUG: What we really want: pid: %d eid:%d\n", cursor.pid, cursor.eid);                            
+            // }
 
             // DEBUG
             fprintf(stderr, "DEBUG: looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);

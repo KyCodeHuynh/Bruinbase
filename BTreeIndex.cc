@@ -392,9 +392,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         rc = current.insert(key, insertPid);
         // Node full?
         if (rc == RC_NODE_FULL) {
-            // DEBUG
-            fprintf(stderr, "SPLIT THIS NON-LEAF NODE!");
-
 
             // insertAndSplit() into a new sibling
             BTNonLeafNode sibling;
@@ -457,7 +454,6 @@ RC BTreeIndex::helperInsert(int curDepth, int key, const RecordId& rid, PageId i
         // Overflow?
         if (rc == RC_NODE_FULL) {
             // insertAndSplit() into a new sibling
-            fprintf(stderr, "DEBUG: SPLIT THIS LEAF NODE!");
 
             BTLeafNode sibling;
             int siblingKey = 0;
@@ -1013,6 +1009,9 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
     // Use readEntry(), then update cursor.eid += 1
     // Spin up a new leaf node with the pointed-to contents
     BTLeafNode leaf;
+
+    // fprintf(stderr, "getting the cursor pid: %d\n", cursor.pid);
+
     int rc = leaf.read(cursor.pid, pf);
     if (rc < 0) {
         // DEBUG
@@ -1020,11 +1019,12 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
         return rc;
     }
 
-    // DEBUG
-    fprintf(stderr, "EID and Key Count: %d %d\n", cursor.eid, leaf.getKeyCount());
+    // // DEBUG
+    // fprintf(stderr, "EID and Key Count: %d %d\n", cursor.eid, leaf.getKeyCount());
 
     // Get the wanted contents.
     rc = leaf.readEntry(cursor.eid, key, rid);
+
     if (rc < 0) {
         // DEBUG
         fprintf(stderr, "read Entry\n");
@@ -1035,8 +1035,6 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
     // Update the IndexCursor 
     // If the eid reaches the last entry in the node, go to the sibling
     if ((cursor.eid + 1) >= leaf.getKeyCount()) {
-        // DEBUG
-        fprintf(stderr, "trying to get the sibling node\n");
         cursor.pid = leaf.getNextNodePtr();
         cursor.eid = 0;
     } else {
