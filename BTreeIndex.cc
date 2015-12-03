@@ -7,6 +7,8 @@
  * @date 3/24/2008
  */
 
+ #define NDEBUG
+
 #include <climits>
 #include <cassert>
 #include <cstdio>

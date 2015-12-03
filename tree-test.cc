@@ -1,6 +1,6 @@
 // Uncomment this to disable all asserts;
 // main() will then display all failed unit-tests
-// #define NDEBUG
+#define NDEBUG
 #include <cassert>
 #include <cstdio>
 #include <cstring>

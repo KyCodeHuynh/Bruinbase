@@ -16,15 +16,15 @@ SqlParser.tab.c: SqlParser.y
 # TODO: Comment out before submission, just in case TA uses this Makefile
 test: bruinbase $(NODE_TEST_SRC) $(TREE_TEST_SRC) $(SRC)
 	# Test BTreeNode
-	g++ -ggdb -o node-test $(NODE_TEST_SRC) 
-	chmod 0755 node-test
-	./node-test
+	# g++ -ggdb -o node-test $(NODE_TEST_SRC) 
+	# chmod 0755 node-test
+	# ./node-test
 	# Test BTreeIndex
-	g++ -ggdb -o tree-test $(TREE_TEST_SRC)
-	chmod 0755 tree-test
-	./tree-test
+	# g++ -ggdb -o tree-test $(TREE_TEST_SRC)
+	# chmod 0755 tree-test
+	# ./tree-test
 	# Test everything via SqlEngine
-	bash queries.sh
+	# bash queries.sh
 	# Test everything with provided tests
 	# See: https://stackoverflow.com/questions/1789594/how-to-write-cd-command-in-makefile
 	chmod 0755 test.sh
