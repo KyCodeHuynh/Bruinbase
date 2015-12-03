@@ -909,7 +909,7 @@ RC BTreeIndex::find(int searchKey, IndexCursor& cursor, int cur_tree_height, Pag
     	// look for the searchKey, set cursor.eid
       if (isLocate) {
           rc = leafnode.locate(searchKey, cursor.eid);
-          fprintf(stderr, "DEBUG: tried to look for: %d\n", searchKey);
+          // fprintf(stderr, "DEBUG: tried to look for: %d\n", searchKey);
          //  if (rc != RC_NO_SUCH_RECORD && rc < 0) {
          //      printf("ERROR: the no such record occurred in leafnode.locate() [Line: %d]\n", __LINE__);
          //      return rc;

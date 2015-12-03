@@ -97,8 +97,8 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         int rangeBottom = smallest_key;
         int rangeTop = largest_key;
         
-        fprintf(stderr, "RANGE BOTTOM START: %d\n", rangeBottom);
-        fprintf(stderr, "RANGE TOP START: %d\n", rangeTop);
+        // fprintf(stderr, "RANGE BOTTOM START: %d\n", rangeBottom);
+        // fprintf(stderr, "RANGE TOP START: %d\n", rangeTop);
 
         // We want the smallest <, <= (lower bound)
         // and the largest >, >= (upper bound)
@@ -124,13 +124,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
         // Make sure that rangeBottom and rangeTop don't have an impossible range
         if (rangeTop < rangeBottom) {
-            fprintf(stderr, "This is an impossible range.\n");
-            fprintf(stderr, "rangeTop and rangeBottom: %d %d\n", rangeTop, rangeBottom);    
+            // fprintf(stderr, "This is an impossible range.\n");
+            // fprintf(stderr, "rangeTop and rangeBottom: %d %d\n", rangeTop, rangeBottom);    
             return RC_INVALID_ATTRIBUTE;
         }
 
         // DEBUG - checking what our range is 
-        fprintf(stderr, "rangeTop and rangeBottom: %d %d\n", rangeTop, rangeBottom);
+        // fprintf(stderr, "rangeTop and rangeBottom: %d %d\n", rangeTop, rangeBottom);
 
         // readForward() from rangeBottom until up to and including rangeTop
         // find the rangeBottom value
@@ -141,7 +141,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         indexTree.locate(start_key, cursor);
 
         // DEBUG
-        fprintf(stderr, "DEBUG: key: %d pid:%d eid:%d \n", start_key, cursor.pid, cursor.eid);
+        // fprintf(stderr, "DEBUG: key: %d pid:%d eid:%d \n", start_key, cursor.pid, cursor.eid);
 
         // Holders for each key, rid, value
         int key = -1;
@@ -165,7 +165,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             // }
 
             // DEBUG
-            fprintf(stderr, "DEBUG: looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);
+            // fprintf(stderr, "DEBUG: looking for: pid:%d sid:%d key:%d\n", rid.pid, rid.sid, key);
 
             if ((rc = rf.read(rid, key, value)) < 0) {
                 fprintf(stderr, "Error: while reading a tuple from table %s: %d\n", table.c_str(), rc);
